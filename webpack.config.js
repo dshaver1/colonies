@@ -5,6 +5,7 @@ module.exports = {
     devtool: 'eval-source-map',
     devServer: {
         static: './dist',
+        hot: true,
         port: 3000
     },
     mode: 'development',
@@ -19,9 +20,5 @@ module.exports = {
     },
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
-    },
-    output: {
-        filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist'),
-    },
+    }
 };
