@@ -1,13 +1,15 @@
-class Pheromone {
+import {Location2D} from "../generics/location";
+
+class Pheromone implements Location2D {
+    x: number;
+    y: number;
     private _next!: Pheromone;
     private _previous!: Pheromone;
-    private _x: number;
-    private _y: number;
     private _p: number;
 
     constructor(x: number, y: number, p: number) {
-        this._x = x;
-        this._y = y;
+        this.x = x;
+        this.y = y;
         this._p = p;
     }
 
@@ -29,22 +31,6 @@ class Pheromone {
 
     set previous(value: Pheromone) {
         this._previous = value;
-    }
-
-    get x(): number {
-        return this._x;
-    }
-
-    set x(value: number) {
-        this._x = value;
-    }
-
-    get y(): number {
-        return this._y;
-    }
-
-    set y(value: number) {
-        this._y = value;
     }
 
     get p(): number {

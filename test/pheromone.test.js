@@ -1,4 +1,4 @@
-const {Pheromone} = require("../src/pheromone");
+const {Pheromone} = require("../src/types/pheromone");
 
 test('Pheromone test', () => {
     let p = new Pheromone(0,0,1);
