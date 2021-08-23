@@ -28,7 +28,7 @@ export interface Behavior<E extends Entity, V extends BehaviorVars> {
 }
 
 export enum BehaviorState {
-    IDLE, TARGET_MOVE, SEARCHING, MOVING, PICKUP_FOOD
+    IDLE, TARGET_MOVE, SEARCHING, MOVING, PICKUP_FOOD, LOOKING_FOR_TRAIL
 }
 
 export interface BehaviorVars {

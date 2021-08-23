@@ -15,9 +15,9 @@ export class Nest extends GraphicsEntity {
         super(x, y, window.NEST_COLOR);
         this.antsPerClick = antsPerClick;
         this.foodTrails = new PheromoneMap('food', window.P_CELL_SIZE, window.FOOD_P_COLOR, this);
-        this.foodTrails.init(window.APP);
+        this.foodTrails.init(window.APP.screen.width, window.APP.screen.height);
         this.nestTrails = new PheromoneMap('nest', window.P_CELL_SIZE, window.NEST_P_COLOR, this);
-        this.nestTrails.init(window.APP);
+        this.nestTrails.init(window.APP.screen.width, window.APP.screen.height);
         this.bounds = window.BOUNDS;
     }
 
@@ -59,6 +59,18 @@ export class Nest extends GraphicsEntity {
                         NEST_PHEROMONES.addPheromone(addedX, addedY, 20, angle, true);
                     }
                 }*/
+    }
+
+    addAnt(): Ant {
+        let ant = new Ant(0, 0, window.ANT_COLOR, this);
+        this.ants.push(ant);
+
+        return ant;
+    }
+
+    deleteAnt(ant: Ant) {
+        this.removeChild(ant);
+        this.ants = this.ants.filter(a => a !== ant);
     }
 
     update(delta: number): void {

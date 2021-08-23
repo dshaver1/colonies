@@ -25,6 +25,11 @@ export class Ant extends MovableEntity implements Behavioral {
     update(delta: number) {
         if (this.isNearHome()) {
             this.nestPCounter = 10;
+
+            if (this.carrying) {
+                this.stopCarrying();
+                this.behaviorState = BehaviorState.IDLE;
+            }
         }
 
         this.evaluate(this.behaviorState);
@@ -119,11 +124,19 @@ export class Ant extends MovableEntity implements Behavioral {
                     time: 1,
                     delay: 0.5,
                     onCompleteFunction: () => {
-                        this.behaviorState = BehaviorState.IDLE;
+                        this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
                         this.determineState();
                     },
-                    onUpdateFunction: () => this.dropNestPheromone(nest.foodTrails, 200)
+                    onUpdateFunction: () => this.dropFoodPheromone(nest.foodTrails, 200)
                 });
+                break;
+            }
+            case BehaviorState.LOOKING_FOR_TRAIL: {
+                let nest: Nest = this.parent as Nest;
+                let pMap: PheromoneMap = this.carrying ? nest.nestTrails : nest.foodTrails;
+
+                pMap.nearbyP
+
                 break;
             }
             default: {
@@ -151,6 +164,16 @@ export class Ant extends MovableEntity implements Behavioral {
             if (this.nestPCounter-- === 0) {
                 this.lastPheromone = undefined;
             }
+        }
+    }
+
+    stopCarrying() {
+        if (this.carrying) {
+            console.log("Dropping!");
+            this.removeChild(this.carrying);
+            this.carrying = undefined;
+            this.stop();
+            this.rotation += Math.PI;
         }
     }
 

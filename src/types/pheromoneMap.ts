@@ -7,6 +7,8 @@ import {BehaviorState} from '../entities/behaviors';
 import {Location2D} from "../generics/location";
 import {Ant} from "../entities/ant";
 
+const detectRadius = 1;
+
 export class PheromoneMap extends Entity {
     readonly _map: Array<Array<Bucket>>;
     readonly _name: string;
@@ -32,9 +34,9 @@ export class PheromoneMap extends Entity {
         this.addToParent(parent);
     }
 
-    init(app: Application) {
-        this._numColumns = Math.ceil(app.screen.width / this._cellSize);
-        this._numRows = Math.ceil(app.screen.height / this._cellSize);
+    init(width: number, height: number) {
+        this._numColumns = Math.ceil(width / this._cellSize);
+        this._numRows = Math.ceil(height / this._cellSize);
 
         try {
             for (let col = 0; col < this._numColumns; col++) {
@@ -91,6 +93,28 @@ export class PheromoneMap extends Entity {
         this.setPheromone(globalPosition.x, globalPosition.y, pheromone);
 
         return pheromone;
+    }
+
+    nearbyP(ant: Ant) : Pheromone[] {
+        let nearbyPs: Pheromone[] = [];
+        let globalPosition: Point = ant.getGlobalPosition();
+        let xIndex = this.getIndex(globalPosition.x);
+        let yIndex = this.getIndex(globalPosition.y);
+        for (let col = xIndex - detectRadius; col <= xIndex + detectRadius; col++) {
+            if (col >= 0 && col < this._map.length) {
+                for (let row = yIndex - detectRadius; row <= yIndex + detectRadius; row++) {
+                    let bucket = this._map[col][row];
+                    if (bucket.pheromone) {
+                        //let radDiff = angleDiff(ant, bucket);
+                        //if (!(col === xIndex && row === yIndex)) { //&& container.radDiff < Math.PI / 2)) {
+                            nearbyPs.push(bucket.pheromone);
+                        //}
+                    }
+                }
+            }
+        }
+
+        return nearbyPs.sort((a, b) => b.p - a.p);
     }
 
     logString(): string {

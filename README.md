@@ -115,6 +115,8 @@ Focus on the big picture. What happens to old colonies once you prestige?
 
 [timer plugin](https://github.com/soimy/eventemitter3-timer)
 
+[xstate - state machine for js](https://github.com/statelyai/xstate)
+
 
 ---
 ## Build Stuff

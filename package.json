@@ -18,6 +18,8 @@
     "@types/node": "^16.6.2",
     "babel-loader": "^8.2.2",
     "jest": "^27.0.6",
+    "jest-webgl-canvas-mock": "^0.2.3",
+    "ts-jest": "^27.0.5",
     "ts-loader": "^9.2.5",
     "ts-node": "^10.2.1",
     "typescript": "^4.3.5",
@@ -29,13 +31,5 @@
     "gsap": "^3.7.1",
     "matter-js": "^0.17.1",
     "pixi.js": "^6.1.2"
-  },
-  "jest": {
-    "moduleFileExtensions": ["ts","js", "jsx"],
-    "moduleDirectories": ["node_modules", "bower_components", "shared"],
-    "moduleNameMapper": {
-      "\\.(css|less)$": "<rootDir>/__mocks__/styleMock.js",
-      "\\.(gif|ttf|eot|svg)$": "<rootDir>/__mocks__/fileMock.js"
-    }
   }
 }

@@ -1,5 +1,6 @@
 import {Location2D} from "../generics/location";
 import {Entity} from "../generics/entity";
+import {PheromoneMap} from "./pheromoneMap";
 
 class Pheromone extends Entity implements Location2D {
     private _next!: Pheromone;
@@ -19,12 +20,13 @@ class Pheromone extends Entity implements Location2D {
     }
 
     private drawDebug() {
+        let color = (this.parent as PheromoneMap)._color;
         this.debugGraphics.alpha = 0.5;
-        this.debugGraphics.beginFill(window.NEST_P_COLOR.color, 1);
+        this.debugGraphics.beginFill(color, 1);
         this.debugGraphics.drawRect(0, 0, 4, 4);
         this.debugGraphics.endFill();
         if (this._previous) {
-            this.debugGraphics.lineStyle(1, window.NEST_P_COLOR.color, 1);
+            this.debugGraphics.lineStyle(1, color, 1);
             this.debugGraphics.moveTo(2, 2);
 
             let prevPoint = this.debugGraphics.toLocal({x: this.debugGraphics.x, y: this.debugGraphics.y}, this.previous);
