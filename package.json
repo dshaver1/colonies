@@ -18,6 +18,7 @@
     "@types/node": "^16.6.2",
     "babel-loader": "^8.2.2",
     "jest": "^27.0.6",
+    "jest-canvas-mock": "^2.3.1",
     "jest-webgl-canvas-mock": "^0.2.3",
     "ts-jest": "^27.0.5",
     "ts-loader": "^9.2.5",
