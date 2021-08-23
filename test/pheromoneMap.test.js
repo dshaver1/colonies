@@ -24,7 +24,7 @@ beforeAll(() => {
     pheromoneMap.init(1000, 1000);
 })
 
-test('Nearby P test', () => {
+test('nearbyP values should be sorted by pheromone value.', () => {
     let ant = nest.addAnt();
     pheromoneMap.addPheromone(ant, 1);
     ant.x = 100;
@@ -41,6 +41,47 @@ test('Nearby P test', () => {
     expect(nearby.length).toEqual(2);
     expect(nearby[0].p).toEqual(2);
     expect(nearby[1].p).toEqual(1);
+
+    nest.deleteAnt(ant);
+});
+
+test('nearbyP() should return values for all 9 adjacent buckets', () => {
+    let ant = nest.addAnt();
+    ant.x = 90;
+    ant.y = 90;
+    pheromoneMap.addPheromone(ant, 10);
+    ant.x = 90;
+    ant.y = 110;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 90;
+    ant.y = 130;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 110;
+    ant.y = 90;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 110;
+    ant.y = 110;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 110;
+    ant.y = 130;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 130;
+    ant.y = 90;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 130;
+    ant.y = 110;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 130;
+    ant.y = 130;
+    pheromoneMap.addPheromone(ant, 1);
+    ant.x = 110;
+    ant.y = 110;
+    let nearby = pheromoneMap.nearbyP(ant);
+
+    expect(nearby.length).toEqual(9);
+    expect(nearby[0].p).toEqual(10);
+    expect(nearby[0].x).toEqual(90);
+    expect(nearby[0].y).toEqual(90);
 
     nest.deleteAnt(ant);
 });
