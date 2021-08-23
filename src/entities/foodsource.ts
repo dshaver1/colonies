@@ -1,6 +1,7 @@
 import {Circle} from "pixi.js";
-import {GraphicsEntity} from "../generics/graphics-entity";
 import {BehaviorState} from "./behaviors";
+import {Entity, GraphicsEntity} from "../generics/entity";
+import {Food} from "./food";
 
 export class FoodSource extends GraphicsEntity {
     foodValue: number;
@@ -8,6 +9,12 @@ export class FoodSource extends GraphicsEntity {
     constructor(x: number, y: number, initialFoodValue: number) {
         super(x,y,window.FOOD_COLOR);
         this.foodValue = initialFoodValue;
+    }
+
+    decrementFoodValue(amount: number) {
+        this.foodValue -= amount;
+        this.width -= amount;
+        this.height -= amount;
     }
 
     drawInternal() {
@@ -37,5 +44,17 @@ export class FoodSource extends GraphicsEntity {
 
     evaluate(state: BehaviorState): void {
         throw new Error("Method not implemented.");
+    }
+
+    createFood(x: number, y: number, parent?: Entity) {
+        console.log("Adding food to x: " + x + ", y: " + y);
+
+        let food: Food = new Food(x, y, 1, parent);
+
+        parent.addChild(food);
+
+        this.decrementFoodValue(1);
+
+        return food;
     }
 }

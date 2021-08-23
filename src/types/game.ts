@@ -47,7 +47,6 @@ export class Game {
         (window.APP.stage as Container).addChild(this.surface);
 
         this.nest = new Nest(upperX/2, upperY/2, 1);
-        this.nest.draw();
     }
 
     start() {
@@ -58,6 +57,8 @@ export class Game {
     gameLoop(delta: number) {
         this.state(delta);
         this.nest.update(delta);
+        this.nest.nestTrails.decayNextColumn(0.2);
+        this.nest.foodTrails.decayNextColumn(0.2);
     }
 
     play(delta: number) {

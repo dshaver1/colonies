@@ -6,7 +6,7 @@ import {Game} from "./types/game";
 import {Color} from "./generics/color";
 import {PheromoneMap} from "./types/pheromoneMap";
 import {Application} from "pixi.js";
-import {Entity} from "./generics/entity";
+import {BoundingBox, Entity} from "./generics/entity";
 
 gsap.registerPlugin(PixiPlugin);
 gsap.registerPlugin(MotionPathPlugin);
@@ -19,10 +19,9 @@ declare global {
     interface Window {
         PIXI: any;
         DEBUG: boolean;
-        FOOD_TRAILS: PheromoneMap;
-        NEST_TRAILS: PheromoneMap;
         APP: Application;
-        BOUNDS: any;
+        GAME: Game;
+        BOUNDS: BoundingBox;
         P_CELL_SIZE: number;
         P_DECAY_SPEED: number;
         ANT_COLOR: Color;
@@ -53,29 +52,33 @@ window.APP = new PIXI.Application({
     resolution: window.devicePixelRatio || 1,
     backgroundColor: window.BACKGROUND_COLOR.color,
     width: window.innerWidth,
-    height: window.innerHeight,
+    height: window.innerHeight
     //antialias: true
 });
 window.APP.renderer.resize(window.innerWidth, window.innerHeight);
 window.DEBUG = true;
-window.BOUNDS = {left: 0, up: 0, right: window.APP.screen.width, down: window.APP.screen.height}
+
+let halfWidth: number = window.APP.screen.width/2;
+let halfHeight: number = window.APP.screen.height/2;
+
+window.BOUNDS = new BoundingBox(-halfWidth, halfWidth, -halfHeight, halfHeight);
 
 /**
  * Pheromone settings
  */
-window.P_CELL_SIZE = 40;
+window.P_CELL_SIZE = 20;
 window.P_DECAY_SPEED = window.APP.screen.width / window.P_CELL_SIZE;
 
 
 /**
  * Initialize the game!
  */
-let game = new Game(window.APP.stage.x,
+window.GAME = new Game(window.APP.stage.x,
     window.APP.stage.y,
     window.APP.screen.width,
     window.APP.screen.height,
     window.BACKGROUND_COLOR);
 
-game.start();
+window.GAME.start();
 
 console.log("Done with setup...");

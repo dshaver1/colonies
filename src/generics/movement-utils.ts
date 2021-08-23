@@ -1,4 +1,5 @@
 import {Location2D} from "./location";
+import {BoundingBox, Entity} from "./entity";
 
 
 const defaultScale = 40;
@@ -17,7 +18,7 @@ const defaultMagnitude = 50;
 export function buildPath(start: Location2D,
                    numPoints: number,
                    accumulator: Array<Location2D>,
-                   bounds: any,
+                   bounds: BoundingBox,
                    magnitude: number = defaultMagnitude): Array<Location2D> {
     let point: Location2D;
     if (accumulator.length === 0) {
@@ -29,7 +30,7 @@ export function buildPath(start: Location2D,
     accumulator.push(point);
 
     if (accumulator.length === numPoints) {
-        console.log("Built path: " + JSON.stringify(accumulator, null, 2));
+        //console.log("Built path: " + JSON.stringify(accumulator, null, 2));
         return accumulator;
     }
 
@@ -39,17 +40,15 @@ export function buildPath(start: Location2D,
 /**
  * Get a point in front of the ant with some random deviation included.
  */
-function randomPoint(start: Location2D, bounds: any, magnitude: number = defaultMagnitude, scale: number = defaultScale) {
+function randomPoint(start: Location2D, bounds: BoundingBox, magnitude: number = defaultMagnitude, scale: number = defaultScale) {
     let xSeed = Math.random() - 0.5;
     let targetPoint = {x: start.x + (magnitude * Math.cos(start.rotation)), y: start.y + (magnitude * Math.sin(start.rotation))}
     let xRand = xSeed * scale;
     let yRand = (Math.random() - 0.5) * scale;
-    let xBounded = bound(targetPoint.x + xRand, bounds.x);
-    let yBounded = bound(targetPoint.y + yRand, bounds.y);
-    let newPoint: Location2D = {x: xBounded, y: yBounded};
-    newPoint.rotation = angle(start, newPoint);
+    let boundedPosition = bounds.bound({x: targetPoint.x + xRand, y: targetPoint.y + yRand});
+    boundedPosition.rotation = angle(start, boundedPosition);
 
-    return newPoint;
+    return boundedPosition;
 }
 
 function angle(c1: Location2D, c2: Location2D) {
@@ -71,21 +70,12 @@ function targetPoint(start: Location2D, magnitude: number) {
     }
 }
 
-function bound(value: number, boundValue: number) {
-    // Absolute value takes care of the left and top borders...
-    let fixed = Math.abs(value);
+export function hit(ant: Entity, entity: Entity): boolean {
+    let antGlobal = ant.getGlobalPosition();
+    let entityGlobal = entity.getGlobalPosition();
 
-    // This takes care of the bottom and right borders.
-    if (fixed > boundValue) {
-        fixed = boundValue - (fixed - boundValue);
-    }
-
-    return fixed;
-}
-
-function hit(ant: Location2D, entity: Location2D) {
-    let a = ant.x - entity.x;
-    let b = ant.y - entity.y;
+    let a = antGlobal.x - entityGlobal.x;
+    let b = antGlobal.y - entityGlobal.y;
     let c = Math.hypot(a, b);
     if (c <= entity.width / 2) {
         return true;

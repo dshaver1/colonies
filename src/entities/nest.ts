@@ -1,19 +1,28 @@
-import {GraphicsEntity} from "../generics/graphics-entity";
 import {Ant} from "./ant";
 import { Circle } from "pixi.js";
 import { BehaviorState } from "./behaviors";
+import {PheromoneMap} from "../types/pheromoneMap";
+import {BoundingBox, GraphicsEntity} from "../generics/entity";
 
 export class Nest extends GraphicsEntity {
     antsPerClick: number;
     ants: Array<Ant> = [];
+    foodTrails: PheromoneMap;
+    nestTrails: PheromoneMap;
+    bounds: BoundingBox;
 
     constructor(x:number, y:number, antsPerClick:number) {
-        super(x, y, window.FOOD_COLOR);
+        super(x, y, window.NEST_COLOR);
         this.antsPerClick = antsPerClick;
+        this.foodTrails = new PheromoneMap('food', window.P_CELL_SIZE, window.FOOD_P_COLOR, this);
+        this.foodTrails.init(window.APP);
+        this.nestTrails = new PheromoneMap('nest', window.P_CELL_SIZE, window.NEST_P_COLOR, this);
+        this.nestTrails.init(window.APP);
+        this.bounds = window.BOUNDS;
     }
 
     drawInternal(): void {
-        this.g.beginFill(0x9966FF);
+        this.g.beginFill(this.color);
         this.g.alpha = 0.5;
         this.g.hitArea = new Circle(0, 0, 30);
         this.g.drawCircle(0, 0, 30);
@@ -30,8 +39,7 @@ export class Nest extends GraphicsEntity {
         this.g.on('click', e => {
             console.log("nest click! antsPerClick: " + this.antsPerClick);
             for (let i = 0; i < this.antsPerClick; i++) {
-                let ant = new Ant(this.x, this.y, window.ANT_COLOR);//new Ant(this.x, this.y, {x: this.app.screen.width, y: this.app.screen.height});
-                ant.draw();
+                let ant = new Ant(0, 0, window.ANT_COLOR, this);
                 this.ants.push(ant);
                 //this.app.stage.addChild(ant.container);
                 //this.app.stage.addChild(ant.debugGraphics);
