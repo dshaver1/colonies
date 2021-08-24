@@ -1,10 +1,12 @@
-import {BoundingBox, Entity, MovableEntity} from "../generics/entity";
+import {BoundingBox, Entity, MovableEntity} from "../common/entity";
 import {gsap} from "gsap";
 import {RoughEase} from "gsap/EasePack";
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import Callback = gsap.Callback;
-import {buildPath} from "../generics/movement-utils";
-import {Location2D} from "../generics/location";
+import {buildPheromonePath, buildSearchPath} from "../common/movement-utils";
+import {Location2D} from "../common/location";
+import {PheromoneMap} from "../types/pheromoneMap";
+import {Pheromone} from "../types/pheromone";
 
 gsap.registerPlugin(MotionPathPlugin);
 gsap.registerPlugin(RoughEase);
@@ -24,7 +26,7 @@ export interface Behavioral {
     evaluate(state: BehaviorState): void;
 }
 
-export interface Behavior<E extends Entity, V extends BehaviorVars> {
+export interface Behavior<E extends Entity<any>, V extends BehaviorVars> {
     execute(entity: E, vars: V): void;
 }
 
@@ -44,12 +46,21 @@ export interface MoveRandomlyVars extends BehaviorVars {
     delay?: number
 }
 
-export class MoveRandomly implements Behavior<MovableEntity, MoveRandomlyVars> {
-    execute(entity: MovableEntity, vars: MoveRandomlyVars) {
+export class MoveRandomly implements Behavior<MovableEntity<any>, MoveRandomlyVars> {
+    execute(entity: MovableEntity<any>, vars: MoveRandomlyVars) {
         stop();
         entity.behaviorState = BehaviorState.MOVING;
 
-        let path = buildPath(entity, vars.numPoints, [], vars.bounds);
+        let path = buildSearchPath(entity, vars.numPoints, [], vars.bounds);
+
+        path.filter(point => {
+            if (point.x && point.y && point.x !== 0 && point.y !== 0) {
+                return true;
+            } else {
+                console.log("Found an undefined or 0,0 point!");
+                return false;
+            }
+        });
 
         if (window.DEBUG) {
             window.DEBUG_GRAPHICS.getGraphics(entity.name).clear();
@@ -88,18 +99,18 @@ export interface MoveToTargetVars extends BehaviorVars {
     delay?: number
 }
 
-export class MoveToTarget implements Behavior<MovableEntity, MoveToTargetVars> {
-    execute(entity: MovableEntity, vars: MoveToTargetVars) {
+export class MoveToTarget implements Behavior<MovableEntity<any>, MoveToTargetVars> {
+    execute(entity: MovableEntity<any>, vars: MoveToTargetVars) {
         stop();
         entity.behaviorState = BehaviorState.MOVING;
 
-        let path = buildPath(entity, vars.numPoints, [], vars.bounds);
+        let path = buildPheromonePath(entity, entity.target as Pheromone)
 
         if (window.DEBUG) {
             window.DEBUG_GRAPHICS.getGraphics(entity.name).clear();
             for (let i = 1; i < path.length; i++) {
-                let p1 = path[i - 1];
-                let p2 = path[i];
+                let p1 = entity.parent.toGlobal(path[i - 1]);
+                let p2 = entity.parent.toGlobal(path[i]);
 
                 window.DEBUG_GRAPHICS.getGraphics(entity.name).lineStyle(1, 0x203d87)
                     .moveTo(p1.x, p1.y)
@@ -126,3 +137,4 @@ export class MoveToTarget implements Behavior<MovableEntity, MoveToTargetVars> {
 }
 
 export const moveRandomly: MoveRandomly = new MoveRandomly();
+export const moveToTarget: MoveToTarget = new MoveToTarget();

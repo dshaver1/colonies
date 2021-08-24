@@ -1,28 +1,42 @@
-import {Color} from "../generics/color";
-import {Behavioral, BehaviorState, moveRandomly} from "./behaviors";
+import {Color} from "../common/color";
+import {Behavioral, BehaviorState, moveRandomly, moveToTarget} from "./behaviors";
 import {PheromoneMap} from "../types/pheromoneMap";
 import {Nest} from "./nest";
-import {Entity, MovableEntity} from "../generics/entity";
+import {Entity, MovableEntity} from "../common/entity";
 import {Pheromone} from "../types/pheromone";
-import {hit} from "../generics/movement-utils";
+import {diff, hit} from "../common/movement-utils";
 import {FoodSource} from "./foodsource";
+import {Bucket} from "../types/bucket";
 
 const detectHomeRange = 25;
 
-export class Ant extends MovableEntity implements Behavioral {
+export class Ant extends MovableEntity<Nest> implements Behavioral {
     lastPheromoneTimestamp: number = Date.now();
     lastStateCheck: number = Date.now();
     lastPheromone: Pheromone;
     nestPCounter: number = 10;
-    carrying: Entity;
-    target: Entity;
+    carrying: Entity<any>;
+    target: Entity<any>;
+    foodBucket: Bucket;
+    nestBucket: Bucket;
 
-    constructor(x: number, y: number, color: Color, parent: Entity) {
+    constructor(x: number, y: number, color: Color, parent: Nest) {
         super(x, y, color, parent);
-        this.rotation = (Math.random() - 0.5) * Math.PI * 2
+        this.rotation = (Math.random() - 0.5) * Math.PI * 2;
+        this.foodBucket = this.parentRef.foodTrails.getBucket(this);
+        this.nestBucket = this.parentRef.nestTrails.getBucket(this);
     }
 
     update(delta: number) {
+        if (diff(this.x, this.foodBucket.x) > window.P_CELL_SIZE || diff(this.y, this.foodBucket.y) > window.P_CELL_SIZE) {
+            let foodBucket: Bucket = this.parentRef.foodTrails.getBucket(this);
+            this.foodBucket = foodBucket ? foodBucket : this.foodBucket;
+            let nestBucket: Bucket = this.parentRef.nestTrails.getBucket(this);
+            this.nestBucket = nestBucket ? nestBucket : this.nestBucket;
+
+            this.determineState();
+        }
+
         if (this.isNearHome()) {
             this.nestPCounter = 10;
 
@@ -41,6 +55,7 @@ export class Ant extends MovableEntity implements Behavioral {
     }
 
     determineState(): BehaviorState {
+        this.lastStateCheck = Date.now();
         let newState: BehaviorState = this.behaviorState;
 
         if (!this.carrying) {
@@ -56,7 +71,7 @@ export class Ant extends MovableEntity implements Behavioral {
 
         this.behaviorState = newState;
 
-        console.log("New state: " + this.behaviorState);
+        //console.log("New state: " + this.behaviorState);
 
         return newState;
     }
@@ -75,7 +90,7 @@ export class Ant extends MovableEntity implements Behavioral {
                         this.behaviorState = BehaviorState.SEARCHING;
                         this.determineState();
                     },
-                    onUpdateFunction: () => this.dropNestPheromone(nest.nestTrails, 400)
+                    onUpdateFunction: () => this.dropNestPheromone(nest.nestTrails, 200)
                 });
                 break;
             }
@@ -96,7 +111,16 @@ export class Ant extends MovableEntity implements Behavioral {
                             this.dropNestPheromone(nest.nestTrails, 400)
                         }
 
-                        if (Date.now() - this.lastStateCheck > 1000) {
+                        if (Date.now() - this.lastStateCheck > 100) {
+                            let nearbyP: Pheromone[] = nest.foodTrails.nearbyP(this);
+
+                            if (nearbyP && nearbyP.length > 0) {
+                                this.target = nearbyP[0];
+                                this.behaviorState = BehaviorState.TARGET_MOVE;
+                                this.stop();
+                                return;
+                            }
+
                             this.determineState();
                         }
                     }
@@ -105,6 +129,28 @@ export class Ant extends MovableEntity implements Behavioral {
             }
             case BehaviorState.TARGET_MOVE: {
                 console.log("TARGET_MOVE!");
+                moveToTarget.execute(this, {
+                    target: this.target,
+                    bounds: this.parentRef.bounds,
+                    numPoints: 3,
+                    time: 0.2,
+                    delay: 0,
+                    onCompleteFunction: () => {
+                        this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
+                        this.determineState();
+                    },
+                    onUpdateFunction: () => {
+                        if (this.carrying) {
+                            this.dropFoodPheromone(this.parentRef.foodTrails, 200);
+                        } else if (this.nestPCounter >= 0) {
+                            this.dropNestPheromone(this.parentRef.nestTrails, 200);
+                        }
+
+                        if (Date.now() - this.lastStateCheck > 100) {
+                            this.determineState();
+                        }
+                    }
+                });
                 break;
             }
             case BehaviorState.MOVING: {
@@ -112,33 +158,63 @@ export class Ant extends MovableEntity implements Behavioral {
                 break;
             }
             case BehaviorState.PICKUP_FOOD: {
-                let nest: Nest = this.parent as Nest;
+                console.log("PICKUP_FOOD!");
+                this.lastPheromone = undefined;
                 this.nestPCounter = 0;
                 this.stop();
                 this.carrying = (this.target as FoodSource).createFood(0, 0, this);
                 this.rotation = this.rotation + Math.PI;
 
                 moveRandomly.execute(this, {
-                    bounds: nest.bounds,
-                    numPoints: 3,
+                    bounds: this.parentRef.bounds,
+                    numPoints: 2,
                     time: 1,
                     delay: 0.5,
                     onCompleteFunction: () => {
                         this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
                         this.determineState();
                     },
-                    onUpdateFunction: () => this.dropFoodPheromone(nest.foodTrails, 200)
+                    onUpdateFunction: () => this.dropFoodPheromone(this.parentRef.foodTrails, 200)
                 });
                 break;
             }
             case BehaviorState.LOOKING_FOR_TRAIL: {
-                let nest: Nest = this.parent as Nest;
-                let pMap: PheromoneMap = this.carrying ? nest.nestTrails : nest.foodTrails;
+                console.log("LOOKING_FOR_TRAIL!");
+                let pMap: PheromoneMap = this.carrying ? this.parentRef.nestTrails : this.parentRef.foodTrails;
                 let nearbyP: Pheromone[] = pMap.nearbyP(this);
 
                 if (nearbyP && nearbyP.length > 0) {
-
+                    this.stop();
+                    this.target = nearbyP[0];
+                    this.behaviorState = BehaviorState.TARGET_MOVE;
+                    break;
                 }
+
+                moveRandomly.execute(this, {
+                    bounds: this.parentRef.bounds,
+                    numPoints: 5,
+                    time: 1.5,
+                    delay: 0.01,
+                    onCompleteFunction: () => {
+                        this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
+                        this.determineState();
+                    },
+                    onUpdateFunction: () => {
+                        if (this.carrying) {
+                            this.dropFoodPheromone(this.parentRef.foodTrails, 200)
+                        }
+
+                        if (Date.now() - this.lastStateCheck > 100) {
+                            let nearbyP: Pheromone[] = pMap.nearbyP(this);
+
+                            if (nearbyP && nearbyP.length > 0) {
+                                this.target = nearbyP[0];
+                                this.behaviorState = BehaviorState.TARGET_MOVE;
+                                this.stop();
+                            }
+                        }
+                    }
+                });
 
                 break;
             }

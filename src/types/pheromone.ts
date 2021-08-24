@@ -1,13 +1,13 @@
-import {Location2D} from "../generics/location";
-import {Entity} from "../generics/entity";
+import {Location2D} from "../common/location";
+import {Entity} from "../common/entity";
 import {PheromoneMap} from "./pheromoneMap";
 
-class Pheromone extends Entity implements Location2D {
+class Pheromone extends Entity<PheromoneMap> implements Location2D {
     private _next!: Pheromone;
     private _previous!: Pheromone;
     private _p: number;
 
-    constructor(x: number, y: number, p: number, previous?: Pheromone, parent?: Entity) {
+    constructor(x: number, y: number, p: number, previous?: Pheromone, parent?: PheromoneMap) {
         super(x, y, parent);
         this._p = p;
 

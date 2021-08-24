@@ -1,15 +1,17 @@
 import {Application, Point} from 'pixi.js'
 import {Bucket} from "./bucket";
-import {Color} from "../generics/color";
+import {Color} from "../common/color";
 import {Pheromone} from "./pheromone";
-import {Entity} from "../generics/entity";
+import {Entity} from "../common/entity";
 import {BehaviorState} from '../entities/behaviors';
-import {Location2D} from "../generics/location";
+import {Location2D} from "../common/location";
 import {Ant} from "../entities/ant";
+import {angleDiff, rotationDiff} from "../common/movement-utils";
+import {Nest} from "../entities/nest";
 
 const detectRadius = 1;
 
-export class PheromoneMap extends Entity {
+export class PheromoneMap extends Entity<Nest> {
     readonly _map: Array<Array<Bucket>>;
     readonly _name: string;
     readonly _cellSize: number;
@@ -21,7 +23,7 @@ export class PheromoneMap extends Entity {
     lastDecayTimestamp: number = Date.now();
     nextDecayIdx: number;
 
-    constructor(name: string, cellSize: number, color: Color, parent?: Entity) {
+    constructor(name: string, cellSize: number, color: Color, parent?: Nest) {
         super(0, 0, parent);
         console.log("Creating pheromone map...");
         this._name = name;
@@ -59,23 +61,40 @@ export class PheromoneMap extends Entity {
      * @param incoming one part of a coordinate.
      * @returns {number} The index corresponding to the coordinate.
      */
-    getIndex(incoming: number) {
-        return Math.max(0, Math.floor(incoming / this._cellSize));
+    getIndex(incoming: number, upperLimit: number) {
+        return Math.min(upperLimit, Math.max(0, Math.floor(incoming / this._cellSize)));
+    }
+
+    getXIndex(incoming: number) {
+        return this.getIndex(incoming, this._numColumns);
+    }
+
+    getYIndex(incoming: number) {
+        return this.getIndex(incoming, this._numRows);
     }
 
     getPheromone(globalX: number, globalY: number): Pheromone {
-        let bucket: Bucket = this._map[this.getIndex(globalX)][this.getIndex(globalY)];
+        let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
-            return this._map[this.getIndex(globalX)][this.getIndex(globalY)].pheromone;
+            return this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].pheromone;
+        }
+    }
+
+    getBucket(ant: Entity<any>): Bucket {
+        let globalPosition: Point = ant.getGlobalPosition();
+        let bucket: Bucket = this._map[this.getXIndex(globalPosition.x)][this.getYIndex(globalPosition.y)];
+
+        if (bucket) {
+            return bucket;
         }
     }
 
     setPheromone(globalX: number, globalY: number, pheromone: Pheromone) {
-        let bucket: Bucket = this._map[this.getIndex(globalX)][this.getIndex(globalY)];
+        let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
-            this._map[this.getIndex(globalX)][this.getIndex(globalY)].pheromone = pheromone;
+            this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].pheromone = pheromone;
         }
     }
 
@@ -98,17 +117,17 @@ export class PheromoneMap extends Entity {
     nearbyP(ant: Ant) : Pheromone[] {
         let nearbyPs: Pheromone[] = [];
         let globalPosition: Point = ant.getGlobalPosition();
-        let xIndex = this.getIndex(globalPosition.x);
-        let yIndex = this.getIndex(globalPosition.y);
+        let xIndex = this.getXIndex(globalPosition.x);
+        let yIndex = this.getYIndex(globalPosition.y);
         for (let col = xIndex - detectRadius; col <= xIndex + detectRadius; col++) {
             if (col >= 0 && col < this._map.length) {
                 for (let row = yIndex - detectRadius; row <= yIndex + detectRadius; row++) {
                     let bucket = this._map[col][row];
-                    if (bucket.pheromone) {
-                        //let radDiff = angleDiff(ant, bucket);
-                        //if (!(col === xIndex && row === yIndex)) { //&& container.radDiff < Math.PI / 2)) {
+                    if (bucket && bucket.pheromone) {
+                        let radDiff = rotationDiff({x: globalPosition.x, y: globalPosition.y, rotation: ant.rotation}, bucket);
+                        if (radDiff < Math.PI / 1.5) {
                             nearbyPs.push(bucket.pheromone);
-                        //}
+                        }
                     }
                 }
             }

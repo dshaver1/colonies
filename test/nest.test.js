@@ -1,6 +1,6 @@
 const {Pheromone} = require("../src/types/pheromone");
 const {PheromoneMap} = require("../src/types/pheromoneMap");
-const {Color} = require("../src/generics/color");
+const {Color} = require("../src/common/color");
 const {Nest} = require("../src/entities/nest");
 const {Game} = require("../src/types/game");
 const PIXI = require("pixi.js");

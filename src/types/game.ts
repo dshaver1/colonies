@@ -1,9 +1,9 @@
 import {PheromoneMap} from "./pheromoneMap";
 import {Graphics, Rectangle, Container} from "pixi.js";
 import {FoodSource} from "../entities/foodsource";
-import {Color} from "../generics/color";
+import {Color} from "../common/color";
 import {Nest} from "../entities/nest";
-import {safeToString} from "../generics/entity";
+import {safeToString} from "../common/entity";
 
 export class Game {
     readonly surface: Graphics;
@@ -38,7 +38,7 @@ export class Game {
                         bezierToTarget(bezierPoints);
                     }*/
             if (this.foodSources.length === 0) {
-                let foodSource: FoodSource = new FoodSource(mouseData.data.global.x, mouseData.data.global.y, 50);
+                let foodSource: FoodSource = new FoodSource(mouseData.data.global.x, mouseData.data.global.y, 5000);
                 foodSource.draw();
                 this.foodSources.push(foodSource);
             }
@@ -58,8 +58,8 @@ export class Game {
     gameLoop(delta: number) {
         this.state(delta);
         this.nest.update(delta);
-        this.nest.nestTrails.decayNextColumn(0.2);
-        this.nest.foodTrails.decayNextColumn(0.2);
+        this.nest.nestTrails.decayNextColumn(0.5);
+        this.nest.foodTrails.decayNextColumn(0.5);
     }
 
     play(delta: number) {

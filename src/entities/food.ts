@@ -1,9 +1,9 @@
-import {Entity, GraphicsEntity} from "../generics/entity";
+import {Entity, GraphicsEntity} from "../common/entity";
 
-export class Food extends GraphicsEntity {
+export class Food extends GraphicsEntity<any> {
     foodValue: number;
 
-    constructor(x: number, y: number, foodValue: number, parent?: Entity) {
+    constructor(x: number, y: number, foodValue: number, parent?: Entity<any>) {
         super(x, y, window.FOOD_COLOR, parent);
         this.foodValue = foodValue;
     }

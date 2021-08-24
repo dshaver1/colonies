@@ -1,5 +1,5 @@
 import {Pheromone} from "./pheromone";
-import {Location2D} from "../generics/location";
+import {Location2D} from "../common/location";
 import {PheromoneMap} from "./pheromoneMap";
 import { Container } from "pixi.js";
 

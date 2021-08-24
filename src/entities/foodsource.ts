@@ -1,9 +1,11 @@
 import {Circle} from "pixi.js";
 import {BehaviorState} from "./behaviors";
-import {Entity, GraphicsEntity} from "../generics/entity";
+import {Entity, GraphicsEntity} from "../common/entity";
 import {Food} from "./food";
 
-export class FoodSource extends GraphicsEntity {
+const foodToSizeRatio: number = 0.01;
+
+export class FoodSource extends GraphicsEntity<any> {
     foodValue: number;
 
     constructor(x: number, y: number, initialFoodValue: number) {
@@ -13,14 +15,14 @@ export class FoodSource extends GraphicsEntity {
 
     decrementFoodValue(amount: number) {
         this.foodValue -= amount;
-        this.width -= amount;
-        this.height -= amount;
+        this.width -= amount * foodToSizeRatio;
+        this.height -= amount * foodToSizeRatio;
     }
 
     drawInternal() {
         this.g.beginFill(window.FOOD_COLOR.color);
-        this.g.hitArea = new Circle(0, 0, this.foodValue);
-        this.g.drawCircle(0, 0, this.foodValue);
+        this.g.hitArea = new Circle(0, 0, this.foodValue * foodToSizeRatio);
+        this.g.drawCircle(0, 0, this.foodValue * foodToSizeRatio);
         this.g.endFill();
     }
 
@@ -29,7 +31,7 @@ export class FoodSource extends GraphicsEntity {
     }
 
     convertFoodValueToWidth(): number {
-        return this.foodValue / 10;
+        return this.foodValue * foodToSizeRatio;
     }
 
     update(delta: number): void {
@@ -46,7 +48,7 @@ export class FoodSource extends GraphicsEntity {
         throw new Error("Method not implemented.");
     }
 
-    createFood(x: number, y: number, parent?: Entity) {
+    createFood(x: number, y: number, parent?: Entity<any>) {
         console.log("Adding food to x: " + x + ", y: " + y);
 
         let food: Food = new Food(x, y, 1, parent);

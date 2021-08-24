@@ -3,11 +3,11 @@ import {gsap} from 'gsap';
 import {PixiPlugin} from 'gsap/PixiPlugin';
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import {Game} from "./types/game";
-import {Color} from "./generics/color";
+import {Color} from "./common/color";
 import {PheromoneMap} from "./types/pheromoneMap";
 import {Application, Container} from "pixi.js";
-import {BoundingBox} from "./generics/entity";
-import {GlobalDebugContainer} from "./generics/global-debug-container";
+import {BoundingBox} from "./common/entity";
+import {GlobalDebugContainer} from "./common/global-debug-container";
 
 gsap.registerPlugin(PixiPlugin);
 gsap.registerPlugin(MotionPathPlugin);

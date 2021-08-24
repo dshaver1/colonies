@@ -2,9 +2,9 @@ import {Ant} from "./ant";
 import { Circle } from "pixi.js";
 import { BehaviorState } from "./behaviors";
 import {PheromoneMap} from "../types/pheromoneMap";
-import {BoundingBox, GraphicsEntity} from "../generics/entity";
+import {BoundingBox, GraphicsEntity} from "../common/entity";
 
-export class Nest extends GraphicsEntity {
+export class Nest extends GraphicsEntity<any> {
     antsPerClick: number;
     antCount: number = 0;
     ants: Array<Ant> = [];
