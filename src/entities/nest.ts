@@ -6,6 +6,7 @@ import {BoundingBox, GraphicsEntity} from "../generics/entity";
 
 export class Nest extends GraphicsEntity {
     antsPerClick: number;
+    antCount: number = 0;
     ants: Array<Ant> = [];
     foodTrails: PheromoneMap;
     nestTrails: PheromoneMap;
@@ -63,6 +64,7 @@ export class Nest extends GraphicsEntity {
 
     addAnt(): Ant {
         let ant = new Ant(0, 0, window.ANT_COLOR, this);
+        ant.name = `ant-${++this.antCount}`;
         this.ants.push(ant);
 
         return ant;

@@ -46,6 +46,7 @@ export class Game {
         }, this);
         (window.APP.stage as Container).addChild(this.surface);
 
+
         this.nest = new Nest(upperX/2, upperY/2, 1);
     }
 

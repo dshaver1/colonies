@@ -134,8 +134,11 @@ export class Ant extends MovableEntity implements Behavioral {
             case BehaviorState.LOOKING_FOR_TRAIL: {
                 let nest: Nest = this.parent as Nest;
                 let pMap: PheromoneMap = this.carrying ? nest.nestTrails : nest.foodTrails;
+                let nearbyP: Pheromone[] = pMap.nearbyP(this);
 
-                pMap.nearbyP
+                if (nearbyP && nearbyP.length > 0) {
+
+                }
 
                 break;
             }

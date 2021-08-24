@@ -5,8 +5,9 @@ import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import {Game} from "./types/game";
 import {Color} from "./generics/color";
 import {PheromoneMap} from "./types/pheromoneMap";
-import {Application} from "pixi.js";
-import {BoundingBox, Entity} from "./generics/entity";
+import {Application, Container} from "pixi.js";
+import {BoundingBox} from "./generics/entity";
+import {GlobalDebugContainer} from "./generics/global-debug-container";
 
 gsap.registerPlugin(PixiPlugin);
 gsap.registerPlugin(MotionPathPlugin);
@@ -30,6 +31,7 @@ declare global {
         NEST_COLOR: Color;
         NEST_P_COLOR: Color;
         BACKGROUND_COLOR: Color;
+        DEBUG_GRAPHICS: GlobalDebugContainer;
     }
 }
 
@@ -80,5 +82,7 @@ window.GAME = new Game(window.APP.stage.x,
     window.BACKGROUND_COLOR);
 
 window.GAME.start();
+window.DEBUG_GRAPHICS = new GlobalDebugContainer();
+(window.APP.stage as Container).addChild(window.DEBUG_GRAPHICS)
 
 console.log("Done with setup...");
