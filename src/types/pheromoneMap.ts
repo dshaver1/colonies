@@ -66,11 +66,11 @@ export class PheromoneMap extends Entity<Nest> {
     }
 
     getXIndex(incoming: number) {
-        return this.getIndex(incoming, this._numColumns-1);
+        return this.getIndex(incoming, this._numColumns - 1);
     }
 
     getYIndex(incoming: number) {
-        return this.getIndex(incoming, this._numRows-1);
+        return this.getIndex(incoming, this._numRows - 1);
     }
 
     getPheromone(globalX: number, globalY: number): Pheromone {
@@ -114,7 +114,7 @@ export class PheromoneMap extends Entity<Nest> {
         return pheromone;
     }
 
-    nearbyP(ant: Ant) : Pheromone[] {
+    nearbyP(ant: Ant): Pheromone[] {
         let nearbyPs: Pheromone[] = [];
         let globalPosition: Point = ant.getGlobalPosition();
         let xIndex = this.getXIndex(globalPosition.x);
@@ -123,10 +123,18 @@ export class PheromoneMap extends Entity<Nest> {
             if (col >= 0 && col < this._map.length) {
                 for (let row = yIndex - detectRadius; row <= yIndex + detectRadius; row++) {
                     let bucket = this._map[col][row];
-                    if (bucket && bucket.pheromone) {
-                        let radDiff = rotationDiff({x: globalPosition.x, y: globalPosition.y, rotation: ant.rotation}, bucket);
-                        if (radDiff < Math.PI / 1.5) {
-                            nearbyPs.push(bucket.pheromone);
+                    if (bucket) {
+                        if (window.DEBUG) {
+                            window.DEBUG_GRAPHICS.getGraphics(ant.name)
+                                .beginFill(this._color, 0.5)
+                                .drawRect(bucket.x, bucket.y, window.P_CELL_SIZE, window.P_CELL_SIZE)
+                                .endFill();
+                        }
+                        if (bucket.pheromone) {
+                            let radDiff = rotationDiff({x: globalPosition.x, y: globalPosition.y, rotation: ant.rotation}, bucket);
+                            if (radDiff < Math.PI / 1.5) {
+                                nearbyPs.push(bucket.pheromone);
+                            }
                         }
                     }
                 }

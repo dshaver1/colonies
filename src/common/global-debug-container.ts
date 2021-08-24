@@ -3,6 +3,7 @@ import {Container, Graphics} from "pixi.js";
 
 export class GlobalDebugContainer extends Container {
     map: Map<string, Graphics> = new Map();
+    lastCleared: number = Date.now();
 
     getGraphics(name: string): Graphics {
         let g = this.map.get(name);
@@ -17,7 +18,11 @@ export class GlobalDebugContainer extends Container {
     }
 
     clear(name: string) {
-        this.map.get(name).clear();
+        let now: number = Date.now();
+        if (now - this.lastCleared > 10000) {
+            this.map.get(name).clear();
+            this.lastCleared = now;
+        }
     }
 
     remove(name: string) {

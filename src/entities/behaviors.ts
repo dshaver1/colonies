@@ -63,7 +63,7 @@ export class MoveRandomly implements Behavior<MovableEntity<any>, MoveRandomlyVa
         });
 
         if (window.DEBUG) {
-            window.DEBUG_GRAPHICS.getGraphics(entity.name).clear();
+            window.DEBUG_GRAPHICS.clear(entity.name);
             for (let i = 1; i < path.length; i++) {
                 let p1 = entity.parent.toGlobal(path[i - 1]);
                 let p2 = entity.parent.toGlobal(path[i]);
@@ -107,7 +107,7 @@ export class MoveToTarget implements Behavior<MovableEntity<any>, MoveToTargetVa
         let path = buildPheromonePath(entity, entity.target as Pheromone)
 
         if (window.DEBUG) {
-            window.DEBUG_GRAPHICS.getGraphics(entity.name).clear();
+            window.DEBUG_GRAPHICS.clear(entity.name);
             for (let i = 1; i < path.length; i++) {
                 let p1 = entity.parent.toGlobal(path[i - 1]);
                 let p2 = entity.parent.toGlobal(path[i]);
