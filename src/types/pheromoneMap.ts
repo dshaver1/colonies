@@ -66,11 +66,11 @@ export class PheromoneMap extends Entity<Nest> {
     }
 
     getXIndex(incoming: number) {
-        return this.getIndex(incoming, this._numColumns);
+        return this.getIndex(incoming, this._numColumns-1);
     }
 
     getYIndex(incoming: number) {
-        return this.getIndex(incoming, this._numRows);
+        return this.getIndex(incoming, this._numRows-1);
     }
 
     getPheromone(globalX: number, globalY: number): Pheromone {
