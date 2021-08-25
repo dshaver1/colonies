@@ -5,7 +5,7 @@ import {Nest} from "../entities/nest";
 import {Surface} from "./surface";
 
 class Pheromone extends Entity<Surface> implements Location2D {
-    private _next!: Pheromone;
+    private _next: Array<Pheromone> = [];
     private _previous!: Pheromone;
     private _type: PheromoneType;
     private _p: number;
@@ -53,11 +53,17 @@ class Pheromone extends Entity<Surface> implements Location2D {
     }
 
     get next(): Pheromone {
-        return this._next;
+        if (this._next && this._next.length > 1) {
+            return this._next.sort((a, b) => b.p - a.p)[0]
+        } else if (this._next && this._next.length === 1) {
+            return this._next[0];
+        }
+
+        return undefined;
     }
 
     set next(value: Pheromone) {
-        this._next = value;
+        this._next.push(value);
     }
 
     get previous(): Pheromone {
