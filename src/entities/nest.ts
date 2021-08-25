@@ -3,17 +3,20 @@ import {Circle, Point} from "pixi.js";
 import {BehaviorState} from "./behaviors";
 import {BoundingBox, GraphicsEntity} from "../common/entity";
 import {Pheromone, PheromoneType} from "../types/pheromone";
+import {ParticleAntContainer} from "./particle-ant";
 
 export class Nest extends GraphicsEntity<any> {
     antsPerClick: number;
     antCount: number = 0;
     ants: Array<Ant> = [];
     bounds: BoundingBox;
+    particleAntContainer: ParticleAntContainer;
 
     constructor(x: number, y: number, antsPerClick: number) {
         super(x, y, window.NEST_COLOR);
         this.antsPerClick = antsPerClick;
         this.bounds = window.BOUNDS;
+        this.particleAntContainer = new ParticleAntContainer();
     }
 
     drawInternal(): void {
@@ -34,8 +37,9 @@ export class Nest extends GraphicsEntity<any> {
         this.g.on('click', e => {
             console.log("nest click! antsPerClick: " + this.antsPerClick);
             for (let i = 0; i < this.antsPerClick; i++) {
-                let ant = new Ant(0, 0, window.ANT_COLOR, this);
-                this.ants.push(ant);
+                this.particleAntContainer.addAnt();
+                // let ant = new Ant(0, 0, window.ANT_COLOR, this);
+                // this.ants.push(ant);
                 //this.app.stage.addChild(ant.container);
                 //this.app.stage.addChild(ant.debugGraphics);
             }
@@ -74,7 +78,7 @@ export class Nest extends GraphicsEntity<any> {
     }
 
     update(delta: number): void {
-        this.ants.forEach(ant => ant.update(delta));
+        this.particleAntContainer.ants.forEach(ant => ant.update(delta));
     }
 
     determineState(): BehaviorState {

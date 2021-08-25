@@ -65,7 +65,8 @@ window.DEBUG = false;
 let halfWidth: number = window.APP.screen.width/2;
 let halfHeight: number = window.APP.screen.height/2;
 
-window.BOUNDS = new BoundingBox(-halfWidth, halfWidth, -halfHeight, halfHeight);
+//window.BOUNDS = new BoundingBox(0, window.APP.screen.width, 0, window.APP.screen.height);
+window.BOUNDS = new BoundingBox(-10000, 10000, -10000, 10000);
 
 /**
  * Pheromone settings
