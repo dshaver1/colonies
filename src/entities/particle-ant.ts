@@ -37,12 +37,6 @@ export class ParticleAnt extends PIXI.Sprite {
     }
 
     update(delta: number) {
-        if (this.x < -500 || this.x > window.APP.screen.width + 500 || this.y < -500 || this.y > window.APP.screen.height + 500) {
-            this.renderable = false;
-        } else {
-            this.renderable = true;
-        }
-
         if (this.behaviorState === BehaviorState.SEARCHING) {
             //console.log("Searching!");
             let path = buildSearchPath(this, 10, [], window.BOUNDS);
@@ -60,6 +54,7 @@ export class ParticleAnt extends PIXI.Sprite {
                         curviness: 0.5
                     },
                     onComplete: () => {
+                        this.checkRenderable();
                         this.behaviorState = BehaviorState.SEARCHING;
                         //this.determineState();
                     },
@@ -67,6 +62,7 @@ export class ParticleAnt extends PIXI.Sprite {
                     callbackScope: this
                 });
             } else {
+                this.checkRenderable();
                 let endPoint = path[path.length-1];
                 setTimeout(() => {
                     this.x = endPoint.x;
@@ -76,6 +72,14 @@ export class ParticleAnt extends PIXI.Sprite {
                 }, 5000)
             }
             this.behaviorState = BehaviorState.IDLE;
+        }
+    }
+
+    checkRenderable() {
+        if (this.x < -1000 || this.x > window.APP.screen.width + 1000 || this.y < -1000 || this.y > window.APP.screen.height + 1000) {
+            this.renderable = false;
+        } else {
+            this.renderable = true;
         }
     }
 }
