@@ -51,7 +51,7 @@ export class Surface extends Entity<any>{
             }
             //FOOD_PHEROMONES.addPheromone(mouseData.data.global.x, mouseData.data.global.y, 10);
         }, this);
-        (window.APP.stage as Container).addChild(this.graphics);
+        this.addChild(this.graphics);
     }
 
     logString(): string {

@@ -1,7 +1,8 @@
 import {Ant} from "./ant";
-import {Circle} from "pixi.js";
+import {Circle, Point} from "pixi.js";
 import {BehaviorState} from "./behaviors";
 import {BoundingBox, GraphicsEntity} from "../common/entity";
+import {Pheromone, PheromoneType} from "../types/pheromone";
 
 export class Nest extends GraphicsEntity<any> {
     antsPerClick: number;
@@ -9,7 +10,7 @@ export class Nest extends GraphicsEntity<any> {
     ants: Array<Ant> = [];
     bounds: BoundingBox;
 
-    constructor(x:number, y:number, antsPerClick:number) {
+    constructor(x: number, y: number, antsPerClick: number) {
         super(x, y, window.NEST_COLOR);
         this.antsPerClick = antsPerClick;
         this.bounds = window.BOUNDS;
@@ -41,18 +42,22 @@ export class Nest extends GraphicsEntity<any> {
         });
 
         // TODO Add static pheromones leading to nest!
-        /*
-                let radius 60;
+        let globalPosition: Point = this.getGlobalPosition();
+        let nestPheromone = new Pheromone(globalPosition.x, globalPosition.y, 100, PheromoneType.NEST, undefined, window.SURFACE);
+        window.SURFACE.antGrid.setPheromone(globalPosition.x, globalPosition.y, nestPheromone, true);
 
-                for (let px = -radius; px <= radius; px += NEST_PHEROMONES.cellSize) {
-                    for (let py = -radius; py <= radius; py += NEST_PHEROMONES.cellSize) {
-                        let addedX = this.x + px;
-                        let addedY = this.y + py;
-                        let angle = Math.atan2(addedY - this.y, addedX - this.x);
+        let radius = 60;
+        for (let px = -radius; px <= radius; px += window.P_CELL_SIZE) {
+            for (let py = -radius; py <= radius; py += window.P_CELL_SIZE) {
+                if (px === -radius || px === radius || py === -radius || py === radius) {
+                    let addedX = globalPosition.x + px;
+                    let addedY = globalPosition.y + py;
+                    let newPheromone = new Pheromone(addedX, addedY, 100, PheromoneType.NEST, nestPheromone, window.SURFACE)
 
-                        NEST_PHEROMONES.addPheromone(addedX, addedY, 20, angle, true);
-                    }
-                }*/
+                    window.SURFACE.antGrid.setPheromone(addedX, addedY, newPheromone, true);
+                }
+            }
+        }
     }
 
     addAnt(): Ant {

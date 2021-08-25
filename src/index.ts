@@ -60,7 +60,7 @@ window.APP = new PIXI.Application({
     //antialias: true
 });
 window.APP.renderer.resize(window.innerWidth, window.innerHeight);
-window.DEBUG = true;
+window.DEBUG = false;
 
 let halfWidth: number = window.APP.screen.width/2;
 let halfHeight: number = window.APP.screen.height/2;

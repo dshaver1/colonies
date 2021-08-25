@@ -3,9 +3,8 @@ import {Behavioral, BehaviorState, moveRandomly, moveToTarget} from "./behaviors
 import {Nest} from "./nest";
 import {Entity, MovableEntity} from "../common/entity";
 import {Pheromone, PheromoneType} from "../types/pheromone";
-import {diff, hit} from "../common/movement-utils";
+import {hit} from "../common/movement-utils";
 import {FoodSource} from "./foodsource";
-import {Bucket} from "../types/bucket";
 
 const detectHomeRange = 25;
 
@@ -97,7 +96,9 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                             this.dropNestPheromone(400)
                         }
 
-                        if (Date.now() - this.lastStateCheck > 100) {
+                        let now: number = Date.now()
+                        if (now - this.lastStateCheck > 400) {
+                            this.lastStateCheck = now;
                             let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, PheromoneType.FOOD);
 
                             if (nearbyP && nearbyP.length > 0) {
@@ -190,7 +191,9 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                             this.dropFoodPheromone(200)
                         }
 
-                        if (Date.now() - this.lastStateCheck > 100) {
+                        let now: number = Date.now()
+                        if (now - this.lastStateCheck > 400) {
+                            this.lastStateCheck = now;
                             let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, pType);
 
                             if (nearbyP && nearbyP.length > 0) {

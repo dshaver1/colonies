@@ -154,6 +154,13 @@ export function rotationDiff(ant: Location2D, other: Location2D): number {
     return diff(unWrappedAnt, unWrappedA1);
 }
 
+export function rotationDiff2(ant:Location2D, other: Location2D): number {
+    let a1 = angle(ant, other);
+    let unWrappedAnt = unwrapRads(ant.rotation);
+    let unWrappedA1 = unwrapRads(a1);
+    return Math.PI - Math.abs(Math.abs(unWrappedAnt - unWrappedA1) - Math.PI);
+}
+
 const _2PI = Math.PI * 2;
 
 export function unwrapRads(rotation: number): number {

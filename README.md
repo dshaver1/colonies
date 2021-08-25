@@ -119,6 +119,8 @@ Focus on the big picture. What happens to old colonies once you prestige?
 
 [Spatial Hashing](https://www.gamedev.net/tutorials/_/technical/game-programming/spatial-hashing-r2697/)
 
+[Particle container demo](https://www.goodboydigital.com/pixijs/canvas/bunnymark/)
+
 
 ---
 ## Build Stuff

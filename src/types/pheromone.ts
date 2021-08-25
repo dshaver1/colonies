@@ -10,19 +10,18 @@ class Pheromone extends Entity<Surface> implements Location2D {
     private _type: PheromoneType;
     private _p: number;
 
-    constructor(x: number, y: number, p: number, previous?: Pheromone, parent?: Surface) {
+    constructor(x: number, y: number, p: number, type: PheromoneType, previous?: Pheromone, parent?: Surface) {
         super(x, y, parent);
         this._p = p;
+        this._type = type;
 
         if (previous) {
             this._previous = previous;
             previous.next = this;
         }
-
-        this.drawDebug();
     }
 
-    private drawDebug() {
+    drawDebug() {
         let color = getColor(this._type);
         this.debugGraphics.alpha = 0.5;
         this.debugGraphics.beginFill(color, 1);
@@ -80,6 +79,14 @@ class Pheromone extends Entity<Surface> implements Location2D {
 
     set p(value: number) {
         this._p = value;
+    }
+
+    get type(): PheromoneType {
+        return this._type;
+    }
+
+    set type(value: PheromoneType) {
+        this._type = value;
     }
 
     logString(): string {

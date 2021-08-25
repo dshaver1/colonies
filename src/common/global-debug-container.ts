@@ -20,8 +20,10 @@ export class GlobalDebugContainer extends Container {
     clear(name: string) {
         let now: number = Date.now();
         if (now - this.lastCleared > 10000) {
-            this.map.get(name).clear();
-            this.lastCleared = now;
+            if (this.map.get(name)) {
+                this.map.get(name).clear();
+                this.lastCleared = now;
+            }
         }
     }
 

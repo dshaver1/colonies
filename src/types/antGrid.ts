@@ -6,7 +6,7 @@ import {Entity} from "../common/entity";
 import {BehaviorState} from '../entities/behaviors';
 import {Location2D} from "../common/location";
 import {Ant} from "../entities/ant";
-import {angleDiff, distance, rotationDiff} from "../common/movement-utils";
+import {angleDiff, distance, rotationDiff, rotationDiff2} from "../common/movement-utils";
 import {Nest} from "../entities/nest";
 
 const detectRadius = 1;
@@ -39,7 +39,7 @@ export class AntGrid {
                 //console.log("Creating column " + col);
                 this._map[col] = [];
                 for (let row = 0; row < this._numRows; row++) {
-                    this._map[col][row] = new Bucket(col * this._cellSize + this._halfCell, row * this._cellSize + this._halfCell);
+                    this._map[col][row] = new Bucket(col * this._cellSize, row * this._cellSize);
                 }
             }
         } catch (e) {
@@ -84,33 +84,22 @@ export class AntGrid {
         }
     }
 
-    setPheromone(globalX: number, globalY: number, pheromone: Pheromone) {
+    setPheromone(globalX: number, globalY: number, pheromone: Pheromone, locked: boolean = false) {
         let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
             this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].addPheromone(pheromone);
+            if (locked) {
+                this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].locked = true;
+            }
         }
     }
 
     addPheromone(ant: Ant, pType: PheromoneType, p: number): Pheromone {
         console.log("Adding pheromone...");
         let globalPosition: Point = ant.getGlobalPosition();
-        let pheromones: Array<Pheromone> = this.getPheromones(globalPosition.x, globalPosition.y, pType);
-        let selectedPheromone: Pheromone;
-
-        if (pheromones && pheromones.length > 0) {
-            if (pheromones.length === 1) {
-                selectedPheromone = pheromones[0];
-            } else {
-                selectedPheromone = pheromones.sort((a, b) => distance(ant, b) - distance(ant, a))[0];
-            }
-
-            selectedPheromone.addP(p);
-        } else {
-            selectedPheromone = new Pheromone(ant.x, ant.y, p, ant.lastPheromone, window.SURFACE);
-            this.setPheromone(globalPosition.x, globalPosition.y, selectedPheromone);
-        }
-
+        let selectedPheromone: Pheromone = new Pheromone(globalPosition.x, globalPosition.y, p, pType, ant.lastPheromone, window.SURFACE);
+        this.setPheromone(globalPosition.x, globalPosition.y, selectedPheromone);
 
         return selectedPheromone;
     }
@@ -120,30 +109,32 @@ export class AntGrid {
         let globalPosition: Point = ant.getGlobalPosition();
         let xIndex = this.getXIndex(globalPosition.x);
         let yIndex = this.getYIndex(globalPosition.y);
+        let currentBucket = this._map[xIndex][yIndex];
         for (let col = xIndex - detectRadius; col <= xIndex + detectRadius; col++) {
             if (col >= 0 && col < this._map.length) {
                 for (let row = yIndex - detectRadius; row <= yIndex + detectRadius; row++) {
                     let bucket: Bucket = this._map[col][row];
                     if (bucket) {
-                        if (window.DEBUG) {
-                            window.DEBUG_GRAPHICS.getGraphics(ant.name)
-                                .beginFill(getColor(pheromoneType), 0.5)
-                                .drawRect(bucket.x, bucket.y, window.P_CELL_SIZE, window.P_CELL_SIZE)
-                                .endFill();
-                        }
                         if (bucket.getPheromones(pheromoneType).length) {
-                            let radDiff = rotationDiff({x: globalPosition.x, y: globalPosition.y, rotation: ant.rotation}, bucket);
+                            let radDiff = rotationDiff2({x: currentBucket.x, y: currentBucket.y, rotation: ant.rotation}, bucket);
                             if (radDiff < Math.PI / 1.5) {
+                                /*                                if (window.DEBUG) {
+                                                                    window.DEBUG_GRAPHICS.getGraphics(ant.name).alpha = 0.4
+                                                                    window.DEBUG_GRAPHICS.getGraphics(ant.name)
+                                                                        .beginFill(getColor(pheromoneType))
+                                                                        .drawRect(bucket.x, bucket.y, window.P_CELL_SIZE, window.P_CELL_SIZE)
+                                                                        .endFill();
+                                                                }*/
                                 bucket.getPheromones(pheromoneType).forEach(currentP => nearbyPs.push(currentP));
                             }
+
                         }
                     }
                 }
             }
         }
 
-        return nearbyPs.sort((a, b) => b.p - a.p);
-    }
+        return nearbyPs.sort((a,b) => b.p - a.p);}
 
     decayColumn(column: number, px: number) {
         this._map[column].filter((bucket: Bucket) => !bucket.locked).map(bucket => bucket.decayAll(px));
