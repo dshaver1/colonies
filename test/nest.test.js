@@ -1,5 +1,5 @@
 const {Pheromone} = require("../src/types/pheromone");
-const {PheromoneMap} = require("../src/types/pheromoneMap");
+const {AntGrid} = require("../src/types/antGrid");
 const {Color} = require("../src/common/color");
 const {Nest} = require("../src/entities/nest");
 const {Game} = require("../src/types/game");
@@ -20,7 +20,7 @@ beforeAll(() => {
     window.NEST_P_COLOR = new Color("#FF00FF");
     window.ANT_COLOR = new Color("#FF00DF");
     nest = new Nest(500, 500, 1);
-    pheromoneMap = new PheromoneMap("nest", 20, new Color("#ffffff"), nest);
+    pheromoneMap = new AntGrid("nest", 20, new Color("#ffffff"), nest);
     pheromoneMap.init(1000, 1000);
 })
 

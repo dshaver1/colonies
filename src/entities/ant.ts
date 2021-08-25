@@ -1,9 +1,8 @@
 import {Color} from "../common/color";
 import {Behavioral, BehaviorState, moveRandomly, moveToTarget} from "./behaviors";
-import {PheromoneMap} from "../types/pheromoneMap";
 import {Nest} from "./nest";
 import {Entity, MovableEntity} from "../common/entity";
-import {Pheromone} from "../types/pheromone";
+import {Pheromone, PheromoneType} from "../types/pheromone";
 import {diff, hit} from "../common/movement-utils";
 import {FoodSource} from "./foodsource";
 import {Bucket} from "../types/bucket";
@@ -17,26 +16,13 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
     nestPCounter: number = 10;
     carrying: Entity<any>;
     target: Entity<any>;
-    foodBucket: Bucket;
-    nestBucket: Bucket;
 
     constructor(x: number, y: number, color: Color, parent: Nest) {
         super(x, y, color, parent);
         this.rotation = (Math.random() - 0.5) * Math.PI * 2;
-        this.foodBucket = this.parentRef.foodTrails.getBucket(this);
-        this.nestBucket = this.parentRef.nestTrails.getBucket(this);
     }
 
     update(delta: number) {
-        if (diff(this.x, this.foodBucket.x) > window.P_CELL_SIZE || diff(this.y, this.foodBucket.y) > window.P_CELL_SIZE) {
-            let foodBucket: Bucket = this.parentRef.foodTrails.getBucket(this);
-            this.foodBucket = foodBucket ? foodBucket : this.foodBucket;
-            let nestBucket: Bucket = this.parentRef.nestTrails.getBucket(this);
-            this.nestBucket = nestBucket ? nestBucket : this.nestBucket;
-
-            this.determineState();
-        }
-
         if (this.isNearHome()) {
             this.nestPCounter = 10;
 
@@ -90,7 +76,7 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                         this.behaviorState = BehaviorState.SEARCHING;
                         this.determineState();
                     },
-                    onUpdateFunction: () => this.dropNestPheromone(nest.nestTrails, 200)
+                    onUpdateFunction: () => this.dropNestPheromone(200)
                 });
                 break;
             }
@@ -108,11 +94,11 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                     },
                     onUpdateFunction: () => {
                         if (this.nestPCounter >= 0) {
-                            this.dropNestPheromone(nest.nestTrails, 400)
+                            this.dropNestPheromone(400)
                         }
 
                         if (Date.now() - this.lastStateCheck > 100) {
-                            let nearbyP: Pheromone[] = nest.foodTrails.nearbyP(this);
+                            let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, PheromoneType.FOOD);
 
                             if (nearbyP && nearbyP.length > 0) {
                                 this.target = nearbyP[0];
@@ -141,9 +127,9 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                     },
                     onUpdateFunction: () => {
                         if (this.carrying) {
-                            this.dropFoodPheromone(this.parentRef.foodTrails, 200);
+                            this.dropFoodPheromone(200);
                         } else if (this.nestPCounter >= 0) {
-                            this.dropNestPheromone(this.parentRef.nestTrails, 200);
+                            this.dropNestPheromone(200);
                         }
 
                         if (Date.now() - this.lastStateCheck > 100) {
@@ -174,14 +160,14 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                         this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
                         this.determineState();
                     },
-                    onUpdateFunction: () => this.dropFoodPheromone(this.parentRef.foodTrails, 200)
+                    onUpdateFunction: () => this.dropFoodPheromone(200)
                 });
                 break;
             }
             case BehaviorState.LOOKING_FOR_TRAIL: {
                 console.log("LOOKING_FOR_TRAIL!");
-                let pMap: PheromoneMap = this.carrying ? this.parentRef.nestTrails : this.parentRef.foodTrails;
-                let nearbyP: Pheromone[] = pMap.nearbyP(this);
+                let pType: PheromoneType = this.carrying ? PheromoneType.NEST : PheromoneType.FOOD;
+                let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, pType);
 
                 if (nearbyP && nearbyP.length > 0) {
                     this.stop();
@@ -201,11 +187,11 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
                     },
                     onUpdateFunction: () => {
                         if (this.carrying) {
-                            this.dropFoodPheromone(this.parentRef.foodTrails, 200)
+                            this.dropFoodPheromone(200)
                         }
 
                         if (Date.now() - this.lastStateCheck > 100) {
-                            let nearbyP: Pheromone[] = pMap.nearbyP(this);
+                            let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, pType);
 
                             if (nearbyP && nearbyP.length > 0) {
                                 this.target = nearbyP[0];
@@ -225,19 +211,19 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
         }
     }
 
-    dropFoodPheromone(pMap: PheromoneMap, interval: number) {
+    dropFoodPheromone(interval: number) {
         let now = Date.now();
         if (now - this.lastPheromoneTimestamp > interval) {
-            this.lastPheromone = pMap.addPheromone(this, 1);
+            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this, PheromoneType.FOOD, 1);
             this.lastPheromoneTimestamp = now;
         }
     }
 
-    dropNestPheromone(pMap: PheromoneMap, interval: number) {
+    dropNestPheromone(interval: number) {
         let now = Date.now();
         //console.log("Trying to drop food pheromone! now: " + now + " lastP: " + this.lastPheromone + " diff: " + (now - this.lastPheromone) + " interval: " + interval);
         if (now - this.lastPheromoneTimestamp > interval) {
-            this.lastPheromone = pMap.addPheromone(this, 1);
+            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this, PheromoneType.NEST, 1);
             this.lastPheromoneTimestamp = now;
 
             if (this.nestPCounter-- === 0) {

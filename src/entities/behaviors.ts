@@ -5,7 +5,7 @@ import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import Callback = gsap.Callback;
 import {buildPheromonePath, buildSearchPath} from "../common/movement-utils";
 import {Location2D} from "../common/location";
-import {PheromoneMap} from "../types/pheromoneMap";
+import {AntGrid} from "../types/antGrid";
 import {Pheromone} from "../types/pheromone";
 
 gsap.registerPlugin(MotionPathPlugin);

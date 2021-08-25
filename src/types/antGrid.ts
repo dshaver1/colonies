@@ -1,39 +1,33 @@
 import {Application, Point} from 'pixi.js'
 import {Bucket} from "./bucket";
 import {Color} from "../common/color";
-import {Pheromone} from "./pheromone";
+import {getColor, Pheromone, PheromoneType} from "./pheromone";
 import {Entity} from "../common/entity";
 import {BehaviorState} from '../entities/behaviors';
 import {Location2D} from "../common/location";
 import {Ant} from "../entities/ant";
-import {angleDiff, rotationDiff} from "../common/movement-utils";
+import {angleDiff, distance, rotationDiff} from "../common/movement-utils";
 import {Nest} from "../entities/nest";
 
 const detectRadius = 1;
 
-export class PheromoneMap extends Entity<Nest> {
+export class AntGrid {
     readonly _map: Array<Array<Bucket>>;
-    readonly _name: string;
     readonly _cellSize: number;
     readonly _halfCell: number;
-    readonly _color: number;
     readonly _alphaFactor: number;
     _numColumns: number;
     _numRows: number;
     lastDecayTimestamp: number = Date.now();
     nextDecayIdx: number;
 
-    constructor(name: string, cellSize: number, color: Color, parent?: Nest) {
-        super(0, 0, parent);
-        console.log("Creating pheromone map...");
-        this._name = name;
+    constructor(cellSize: number) {
+        console.log("Creating ant grid...");
         this._map = [];
         this._cellSize = cellSize;
         this._halfCell = cellSize / 2;
-        this._color = color.color;
         this._alphaFactor = 0.01;
         this.nextDecayIdx = 0;
-        this.addToParent(parent);
     }
 
     init(width: number, height: number) {
@@ -52,7 +46,7 @@ export class PheromoneMap extends Entity<Nest> {
             console.log(e);
         }
 
-        console.log("Initialized pheromone map with " + this._numColumns + " columns and " + this._numRows + " rows with size " + this._cellSize + " and color " + this._color);
+        console.log("Initialized ant grid with " + this._numColumns + " columns and " + this._numRows + " rows with size " + this._cellSize);
     }
 
     /**
@@ -73,11 +67,11 @@ export class PheromoneMap extends Entity<Nest> {
         return this.getIndex(incoming, this._numRows - 1);
     }
 
-    getPheromone(globalX: number, globalY: number): Pheromone {
+    getPheromones(globalX: number, globalY: number, type: PheromoneType): Array<Pheromone> {
         let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
-            return this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].pheromone;
+            return this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].getPheromones(type);
         }
     }
 
@@ -94,27 +88,34 @@ export class PheromoneMap extends Entity<Nest> {
         let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
-            this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].pheromone = pheromone;
+            this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].addPheromone(pheromone);
         }
     }
 
-    addPheromone(ant: Ant, p: number): Pheromone {
+    addPheromone(ant: Ant, pType: PheromoneType, p: number): Pheromone {
         console.log("Adding pheromone...");
         let globalPosition: Point = ant.getGlobalPosition();
-        let pheromone: Pheromone = this.getPheromone(globalPosition.x, globalPosition.y);
+        let pheromones: Array<Pheromone> = this.getPheromones(globalPosition.x, globalPosition.y, pType);
+        let selectedPheromone: Pheromone;
 
-        if (pheromone) {
-            pheromone.addP(p);
+        if (pheromones && pheromones.length > 0) {
+            if (pheromones.length === 1) {
+                selectedPheromone = pheromones[0];
+            } else {
+                selectedPheromone = pheromones.sort((a, b) => distance(ant, b) - distance(ant, a))[0];
+            }
+
+            selectedPheromone.addP(p);
         } else {
-            pheromone = new Pheromone(ant.x, ant.y, p, ant.lastPheromone, this);
+            selectedPheromone = new Pheromone(ant.x, ant.y, p, ant.lastPheromone, window.SURFACE);
+            this.setPheromone(globalPosition.x, globalPosition.y, selectedPheromone);
         }
 
-        this.setPheromone(globalPosition.x, globalPosition.y, pheromone);
 
-        return pheromone;
+        return selectedPheromone;
     }
 
-    nearbyP(ant: Ant): Pheromone[] {
+    nearbyP(ant: Ant, pheromoneType: PheromoneType): Pheromone[] {
         let nearbyPs: Pheromone[] = [];
         let globalPosition: Point = ant.getGlobalPosition();
         let xIndex = this.getXIndex(globalPosition.x);
@@ -122,18 +123,18 @@ export class PheromoneMap extends Entity<Nest> {
         for (let col = xIndex - detectRadius; col <= xIndex + detectRadius; col++) {
             if (col >= 0 && col < this._map.length) {
                 for (let row = yIndex - detectRadius; row <= yIndex + detectRadius; row++) {
-                    let bucket = this._map[col][row];
+                    let bucket: Bucket = this._map[col][row];
                     if (bucket) {
                         if (window.DEBUG) {
                             window.DEBUG_GRAPHICS.getGraphics(ant.name)
-                                .beginFill(this._color, 0.5)
+                                .beginFill(getColor(pheromoneType), 0.5)
                                 .drawRect(bucket.x, bucket.y, window.P_CELL_SIZE, window.P_CELL_SIZE)
                                 .endFill();
                         }
-                        if (bucket.pheromone) {
+                        if (bucket.getPheromones(pheromoneType).length) {
                             let radDiff = rotationDiff({x: globalPosition.x, y: globalPosition.y, rotation: ant.rotation}, bucket);
                             if (radDiff < Math.PI / 1.5) {
-                                nearbyPs.push(bucket.pheromone);
+                                bucket.getPheromones(pheromoneType).forEach(currentP => nearbyPs.push(currentP));
                             }
                         }
                     }
@@ -142,18 +143,6 @@ export class PheromoneMap extends Entity<Nest> {
         }
 
         return nearbyPs.sort((a, b) => b.p - a.p);
-    }
-
-    logString(): string {
-        return `name: ${this._name}`;
-    }
-
-    determineState(): BehaviorState {
-        throw new Error('Method not implemented.');
-    }
-
-    evaluate(state: BehaviorState): void {
-        throw new Error('Method not implemented.');
     }
 
     decayColumn(column: number, px: number) {

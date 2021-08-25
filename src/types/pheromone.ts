@@ -1,13 +1,16 @@
 import {Location2D} from "../common/location";
 import {Entity} from "../common/entity";
-import {PheromoneMap} from "./pheromoneMap";
+import {AntGrid} from "./antGrid";
+import {Nest} from "../entities/nest";
+import {Surface} from "./surface";
 
-class Pheromone extends Entity<PheromoneMap> implements Location2D {
+class Pheromone extends Entity<Surface> implements Location2D {
     private _next!: Pheromone;
     private _previous!: Pheromone;
+    private _type: PheromoneType;
     private _p: number;
 
-    constructor(x: number, y: number, p: number, previous?: Pheromone, parent?: PheromoneMap) {
+    constructor(x: number, y: number, p: number, previous?: Pheromone, parent?: Surface) {
         super(x, y, parent);
         this._p = p;
 
@@ -20,7 +23,7 @@ class Pheromone extends Entity<PheromoneMap> implements Location2D {
     }
 
     private drawDebug() {
-        let color = (this.parent as PheromoneMap)._color;
+        let color = getColor(this._type);
         this.debugGraphics.alpha = 0.5;
         this.debugGraphics.beginFill(color, 1);
         this.debugGraphics.drawRect(0, 0, 4, 4);
@@ -78,4 +81,17 @@ class Pheromone extends Entity<PheromoneMap> implements Location2D {
     }
 }
 
+export enum PheromoneType {
+    FOOD, NEST
+}
+
 export { Pheromone }
+
+export function getColor(type: PheromoneType) {
+    switch (type) {
+        case PheromoneType.FOOD:
+            return window.FOOD_P_COLOR.color;
+        case PheromoneType.NEST:
+            return window.NEST_P_COLOR.color;
+    }
+}

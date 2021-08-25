@@ -1,24 +1,17 @@
 import {Ant} from "./ant";
-import { Circle } from "pixi.js";
-import { BehaviorState } from "./behaviors";
-import {PheromoneMap} from "../types/pheromoneMap";
+import {Circle} from "pixi.js";
+import {BehaviorState} from "./behaviors";
 import {BoundingBox, GraphicsEntity} from "../common/entity";
 
 export class Nest extends GraphicsEntity<any> {
     antsPerClick: number;
     antCount: number = 0;
     ants: Array<Ant> = [];
-    foodTrails: PheromoneMap;
-    nestTrails: PheromoneMap;
     bounds: BoundingBox;
 
     constructor(x:number, y:number, antsPerClick:number) {
         super(x, y, window.NEST_COLOR);
         this.antsPerClick = antsPerClick;
-        this.foodTrails = new PheromoneMap('food', window.P_CELL_SIZE, window.FOOD_P_COLOR, this);
-        this.foodTrails.init(window.APP.screen.width, window.APP.screen.height);
-        this.nestTrails = new PheromoneMap('nest', window.P_CELL_SIZE, window.NEST_P_COLOR, this);
-        this.nestTrails.init(window.APP.screen.width, window.APP.screen.height);
         this.bounds = window.BOUNDS;
     }
 

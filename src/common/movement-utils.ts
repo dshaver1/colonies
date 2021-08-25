@@ -143,7 +143,7 @@ export function diff(num1: number, num2: number) {
     }
 }
 
-function distance(p1: Location2D, p2: Location2D): number {
+export function distance(p1: Location2D, p2: Location2D): number {
     return Math.hypot(p1.x - p2.x, p1.y - p2.y);
 }
 

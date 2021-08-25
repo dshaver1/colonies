@@ -20,6 +20,7 @@ export class Game {
     }
 
     start() {
+        window.SURFACE = this.surface;
         window.APP.ticker.add(delta => this.gameLoop(delta));
         this.state = this.play;
     }
@@ -27,8 +28,8 @@ export class Game {
     gameLoop(delta: number) {
         this.state(delta);
         this.nest.update(delta);
-        this.nest.nestTrails.decayNextColumn(0.5);
-        this.nest.foodTrails.decayNextColumn(0.5);
+        this.surface.antGrid.decayNextColumn(0.5);
+        this.surface.antGrid.decayNextColumn(0.5);
     }
 
     play(delta: number) {

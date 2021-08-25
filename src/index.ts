@@ -4,10 +4,11 @@ import {PixiPlugin} from 'gsap/PixiPlugin';
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import {Game} from "./types/game";
 import {Color} from "./common/color";
-import {PheromoneMap} from "./types/pheromoneMap";
+import {AntGrid} from "./types/antGrid";
 import {Application, Container} from "pixi.js";
 import {BoundingBox} from "./common/entity";
 import {GlobalDebugContainer} from "./common/global-debug-container";
+import {Surface} from "./types/surface";
 
 gsap.registerPlugin(PixiPlugin);
 gsap.registerPlugin(MotionPathPlugin);
@@ -22,6 +23,7 @@ declare global {
         DEBUG: boolean;
         APP: Application;
         GAME: Game;
+        SURFACE: Surface;
         BOUNDS: BoundingBox;
         P_CELL_SIZE: number;
         P_DECAY_SPEED: number;
