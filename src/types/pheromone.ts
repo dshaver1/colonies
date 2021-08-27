@@ -1,17 +1,16 @@
 import {Location2D} from "../common/location";
 import {Entity} from "../common/entity";
-import {AntGrid} from "./antGrid";
-import {Nest} from "../entities/nest";
 import {Surface} from "./surface";
+import {PheromoneType} from "./pheromone-type";
 
-class Pheromone extends Entity<Surface> implements Location2D {
+export class Pheromone extends Entity<Surface> implements Location2D {
     private _next: Array<Pheromone> = [];
     private _previous!: Pheromone;
     private _type: PheromoneType;
     private _p: number;
 
     constructor(x: number, y: number, p: number, type: PheromoneType, previous?: Pheromone, parent?: Surface) {
-        super(x, y, parent);
+        super(x, y, getTexture(type), parent);
         this._p = p;
         this._type = type;
 
@@ -19,36 +18,6 @@ class Pheromone extends Entity<Surface> implements Location2D {
             this._previous = previous;
             previous.next = this;
         }
-    }
-
-    drawDebug() {
-        let color = getColor(this._type);
-        this.debugGraphics.alpha = 0.5;
-        this.debugGraphics.beginFill(color, 1);
-        this.debugGraphics.drawRect(0, 0, 4, 4);
-        this.debugGraphics.endFill();
-        if (this._previous) {
-            this.debugGraphics.lineStyle(1, color, 1);
-            this.debugGraphics.moveTo(2, 2);
-
-            let prevPoint = this.debugGraphics.toLocal({x: this.debugGraphics.x, y: this.debugGraphics.y}, this.previous);
-
-            this.debugGraphics.lineTo(prevPoint.x + 2, prevPoint.y + 2);
-        }
-    }
-
-    decay(amount: number) {
-        this._p -= amount;
-        this.updateAlpha();
-    }
-
-    addP(amount: number) {
-        this._p += amount;
-        this.updateAlpha();
-    }
-
-    private updateAlpha() {
-        this.debugGraphics.alpha = this._p * 0.5;
     }
 
     get next(): Pheromone {
@@ -73,14 +42,6 @@ class Pheromone extends Entity<Surface> implements Location2D {
         this._previous = value;
     }
 
-    get p(): number {
-        return this._p;
-    }
-
-    set p(value: number) {
-        this._p = value;
-    }
-
     get type(): PheromoneType {
         return this._type;
     }
@@ -89,22 +50,37 @@ class Pheromone extends Entity<Surface> implements Location2D {
         this._type = value;
     }
 
+    get p(): number {
+        return this._p;
+    }
+
+    set p(value: number) {
+        this._p = value;
+    }
+
+    public update(delta: number): void {
+        throw new Error("Method not implemented.");
+    }
+
+    decay(amount: number) {
+        this._p -= amount;
+        this.updateAlpha();
+    }
+
+    addP(amount: number) {
+        this._p += amount;
+        this.updateAlpha();
+    }
+
     logString(): string {
         return `_p: ${this._p}`;
     }
-}
 
-export enum PheromoneType {
-    FOOD, NEST
-}
-
-export { Pheromone }
-
-export function getColor(type: PheromoneType) {
-    switch (type) {
-        case PheromoneType.FOOD:
-            return window.FOOD_P_COLOR.color;
-        case PheromoneType.NEST:
-            return window.NEST_P_COLOR.color;
+    private updateAlpha() {
+        this.alpha = this._p * 0.5;
     }
+}
+
+function getTexture(type: PheromoneType) {
+    return type === PheromoneType.NEST ? window.TEXTURES.NEST_PHEROMONE : window.TEXTURES.FOOD_PHEROMONE;
 }

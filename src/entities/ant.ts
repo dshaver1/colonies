@@ -1,14 +1,47 @@
-import {Color} from "../common/color";
-import {Behavioral, BehaviorState, moveRandomly, moveToTarget} from "./behaviors";
-import {Nest} from "./nest";
+import * as PIXI from 'pixi.js';
 import {Entity, MovableEntity} from "../common/entity";
-import {Pheromone, PheromoneType} from "../types/pheromone";
-import {hit} from "../common/movement-utils";
-import {FoodSource} from "./foodsource";
+import {BehaviorState, moveRandomly} from "./behaviors";
+import {gsap as gsapcore} from "gsap";
+import {RoughEase} from "gsap/EasePack";
+import {MotionPathPlugin} from "gsap/MotionPathPlugin";
+import {Nest} from "./nest";
+import {Pheromone} from "../types/pheromone";
+import {PheromoneType} from "../types/pheromone-type";
 
-const detectHomeRange = 25;
+gsapcore.registerPlugin(MotionPathPlugin);
+gsapcore.registerPlugin(RoughEase);
 
-export class Ant extends MovableEntity<Nest> implements Behavioral {
+export class ParticleAntContainer extends PIXI.ParticleContainer {
+    ants: Array<Ant> = [];
+    texture: PIXI.Texture;
+
+    constructor() {
+        super(10000, {rotation: true});
+        this.texture = window.TEXTURES.ANT;
+        (window.APP.stage as PIXI.Container).addChild(this);
+    }
+
+    addAnt(nest: Nest): Ant {
+        let ant: Ant = new Ant(this.texture, nest);
+        ant.name = `ant-${this.ants.length}`;
+        this.ants.push(ant);
+        this.addChild(ant);
+
+        return ant;
+    }
+
+    removeAnt(ant: Ant) {
+        this.removeChild(ant);
+        this.ants = this.ants.filter(a => a !== ant);
+        ant.destroy();
+    }
+
+    update(delta: number): void {
+        this.ants.forEach(ant => ant.update(delta));
+    }
+}
+
+export class Ant extends MovableEntity<Nest> {
     lastPheromoneTimestamp: number = Date.now();
     lastStateCheck: number = Date.now();
     lastPheromone: Pheromone;
@@ -16,52 +49,112 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
     carrying: Entity<any>;
     target: Entity<any>;
 
-    constructor(x: number, y: number, color: Color, parent: Nest) {
-        super(x, y, color, parent);
+    constructor(texture: PIXI.Texture, nest: Nest) {
+        super(nest.x, nest.y, texture, nest);
+        this.behaviorState = BehaviorState.SEARCHING;
         this.rotation = (Math.random() - 0.5) * Math.PI * 2;
     }
 
     update(delta: number) {
-        if (this.isNearHome()) {
-            this.nestPCounter = 10;
-
-            if (this.carrying) {
-                this.stopCarrying();
-                this.behaviorState = BehaviorState.IDLE;
-            }
-        }
-
+        this.behaviorState = this.determineState();
         this.evaluate(this.behaviorState);
     }
 
-
-    private isNearHome(): boolean {
-        return (this.x < detectHomeRange && this.x > -detectHomeRange) && (this.y < detectHomeRange && this.y > -detectHomeRange);
-    }
-
     determineState(): BehaviorState {
-        this.lastStateCheck = Date.now();
-        let newState: BehaviorState = this.behaviorState;
-
-        if (!this.carrying) {
-            let foodSourceHits = window.GAME.foodSources.filter(foodSource => hit(this, foodSource));
-            if (foodSourceHits && foodSourceHits.length > 0) {
-                newState = BehaviorState.PICKUP_FOOD;
-                this.target = foodSourceHits[0];
-            }
-        } else if (newState === BehaviorState.IDLE) {
-            // IDLE ants should start searching for food.
-            newState = BehaviorState.SEARCHING
-        }
-
-        this.behaviorState = newState;
-
-        //console.log("New state: " + this.behaviorState);
-
-        return newState;
+        return this.behaviorState;
     }
 
     evaluate(state: BehaviorState): void {
+        switch (state) {
+            case BehaviorState.SEARCHING:
+                //console.log("Searching!");
+                moveRandomly.execute(this, {
+                    bounds: window.BOUNDS,
+                    numPoints: 10,
+                    time: 3,
+                    delay: 0.01,
+                    onCompleteFunction: () => {
+                        this.behaviorState = BehaviorState.SEARCHING;
+                        this.determineState();
+                    },
+                    onUpdateFunction: () => {
+                        if (this.nestPCounter >= 0) {
+                            this.dropNestPheromone(400)
+                        }
+
+                        this.checkPheromones();
+                    }
+                });
+                this.behaviorState = BehaviorState.IDLE;
+                break;
+            case BehaviorState.IDLE:
+                break;
+        }
+    }
+
+    dropFoodPheromone(interval: number) {
+        let now = Date.now();
+        if (now - this.lastPheromoneTimestamp > interval) {
+            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this,1);
+            this.lastPheromoneTimestamp = now;
+        }
+    }
+
+    dropNestPheromone(interval: number) {
+        let now = Date.now();
+        //console.log("Trying to drop food pheromone! now: " + now + " lastP: " + this.lastPheromone + " diff: " + (now - this.lastPheromone) + " interval: " + interval);
+        if (now - this.lastPheromoneTimestamp > interval) {
+            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this, 1);
+            this.lastPheromoneTimestamp = now;
+
+            if (this.nestPCounter-- === 0) {
+                this.lastPheromone = undefined;
+            }
+        }
+    }
+
+    stopCarrying() {
+        if (this.carrying) {
+            console.log("Dropping!");
+            this.removeChild(this.carrying);
+            this.carrying = undefined;
+            this.stop();
+            this.rotation += Math.PI;
+        }
+    }
+
+    checkPheromones() {
+        let now: number = Date.now();
+        if (now - this.lastStateCheck > 400) {
+            this.lastStateCheck = now;
+            let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, PheromoneType.FOOD);
+
+            if (nearbyP && nearbyP.length > 0) {
+                this.target = nearbyP[0];
+                this.behaviorState = BehaviorState.TARGET_MOVE;
+                this.stop();
+                return;
+            }
+
+            this.determineState();
+        }
+    }
+
+    pType() {
+        if (this.carrying) {
+            return PheromoneType.FOOD;
+        }
+
+        return PheromoneType.NEST;
+    }
+
+    logString(): string {
+        return this.name;
+    }
+}
+
+/*
+evaluate(state: BehaviorState): void {
         switch (state) {
             case BehaviorState.IDLE: {
                 console.log("IDLE!");
@@ -213,50 +306,4 @@ export class Ant extends MovableEntity<Nest> implements Behavioral {
             }
         }
     }
-
-    dropFoodPheromone(interval: number) {
-        let now = Date.now();
-        if (now - this.lastPheromoneTimestamp > interval) {
-            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this, PheromoneType.FOOD, 1);
-            this.lastPheromoneTimestamp = now;
-        }
-    }
-
-    dropNestPheromone(interval: number) {
-        let now = Date.now();
-        //console.log("Trying to drop food pheromone! now: " + now + " lastP: " + this.lastPheromone + " diff: " + (now - this.lastPheromone) + " interval: " + interval);
-        if (now - this.lastPheromoneTimestamp > interval) {
-            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this, PheromoneType.NEST, 1);
-            this.lastPheromoneTimestamp = now;
-
-            if (this.nestPCounter-- === 0) {
-                this.lastPheromone = undefined;
-            }
-        }
-    }
-
-    stopCarrying() {
-        if (this.carrying) {
-            console.log("Dropping!");
-            this.removeChild(this.carrying);
-            this.carrying = undefined;
-            this.stop();
-            this.rotation += Math.PI;
-        }
-    }
-
-    drawInternal(): void {
-        console.log("Drawing ant at " + this.x + ", " + this.y);
-        this.g.beginFill(0x6688DD);
-        this.g.drawRect(-3, 1, 3, 4);
-        this.g.drawRect(-4, 2, 1, 2);
-        this.g.drawRect(-8, 1, 4, 4);
-        this.g.drawRect(-12, 2, 2, 2);
-        this.g.drawRect(-15, 1, 6, 4);
-        this.g.endFill();
-    }
-
-    logString(): string {
-        return "behavior: ";
-    }
-}
+ */

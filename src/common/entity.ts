@@ -1,26 +1,40 @@
 import {Location2D} from "./location";
-import {Container, Graphics} from "pixi.js";
+import {Container, Graphics, Sprite, Texture} from "pixi.js";
 import {Behavioral, BehaviorState} from "../entities/behaviors";
 import Tween = gsap.core.Tween;
-import {Color} from "./color";
 
-export abstract class Entity<T extends Entity<any>> extends Container implements Location2D {
+export abstract class Entity<T extends Entity<any>> extends Sprite implements Location2D {
     debugGraphics: Graphics;
     tween: Tween;
     target: Entity<any>;
     parentRef: T;
 
-    constructor(x: number, y: number, parent?: T) {
-        super();
+    constructor(x: number, y: number, texture: Texture, parent?: T) {
+        super(texture);
         this.x = x;
         this.y = y;
+        this.anchor.set(0.5, 0.5);
         this.debugGraphics = new Graphics();
         this.addChild(this.debugGraphics);
         this.parentRef = parent;
         this.addToParent(parent);
     }
 
+    get location2D(): Location2D {
+        return {x: this.x, y: this.y, rotation: this.rotation};
+    }
+
     abstract logString(): string;
+
+    public abstract update(delta: number): void;
+
+    checkRenderable() {
+        if (this.x < -1000 || this.x > window.APP.screen.width + 1000 || this.y < -1000 || this.y > window.APP.screen.height + 1000) {
+            this.renderable = false;
+        } else {
+            this.renderable = true;
+        }
+    }
 
     stop() {
         if (this.tween && this.tween.isActive()) {
@@ -38,52 +52,16 @@ export abstract class Entity<T extends Entity<any>> extends Container implements
         }
     }
 
-    get location2D(): Location2D {
-        return {x: this.x, y: this.y, rotation: this.rotation};
-    }
-
     toString(): string {
         return this.constructor.name + '(' + this.x + ',' + this.y + ') {' + this.logString() + '}';
     }
 }
 
-export abstract class GraphicsEntity<T extends Entity<any>> extends Entity<T> {
-    g: Graphics;
-    color: number;
-
-    protected constructor(x: number, y: number, color: Color, parent?: T) {
-        super(x, y, parent);
-        this.g = new Graphics();
-        this.color = color.color;
-        this.addChild(this.g);
-        this.draw(false, parent);
-    }
-
-    /**
-     * Public method to call to draw the entity.
-     * @param clear Whether or not we should clear the graphics prior to drawing.
-     * @param parent Optional parent. If not supplied, adds the entity to the main stage.
-     */
-    draw(clear: boolean = false, parent?: T): void {
-        if (clear) {
-            this.g.clear();
-        }
-        this.drawInternal();
-    }
-
-    /**
-     * Override this to provide draw instructions.
-     */
-    protected abstract drawInternal(): void;
-
-    public abstract update(delta: number): void;
-}
-
-export abstract class MovableEntity<T extends Entity<any>> extends GraphicsEntity<T> implements Behavioral {
+export abstract class MovableEntity<T extends Entity<any>> extends Entity<T> implements Behavioral {
     behaviorState: BehaviorState;
 
-    protected constructor(x: number, y: number, color: Color, parent?: T) {
-        super(x, y, color, parent);
+    protected constructor(x: number, y: number, texture: Texture, parent?: T) {
+        super(x, y, texture);
         this.behaviorState = BehaviorState.IDLE;
     }
 

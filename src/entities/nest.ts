@@ -1,43 +1,36 @@
-import {Ant} from "./ant";
-import {Circle, Point} from "pixi.js";
-import {BehaviorState} from "./behaviors";
-import {BoundingBox, GraphicsEntity} from "../common/entity";
-import {Pheromone, PheromoneType} from "../types/pheromone";
-import {ParticleAntContainer} from "./particle-ant";
+import {Circle, Graphics, Point, Texture} from "pixi.js";
+import {BoundingBox, Entity} from "../common/entity";
+import {Pheromone} from "../types/pheromone";
+import {Ant, ParticleAntContainer} from "./ant";
+import {Colors} from "../constants/colors";
+import {PheromoneType} from "../types/pheromone-type";
 
-export class Nest extends GraphicsEntity<any> {
+export class Nest extends Entity<any> {
     antsPerClick: number;
     antCount: number = 0;
-    ants: Array<Ant> = [];
     bounds: BoundingBox;
     particleAntContainer: ParticleAntContainer;
 
     constructor(x: number, y: number, antsPerClick: number) {
-        super(x, y, window.NEST_COLOR);
+        super(x, y, window.TEXTURES.NEST);
         this.antsPerClick = antsPerClick;
         this.bounds = window.BOUNDS;
         this.particleAntContainer = new ParticleAntContainer();
-    }
-
-    drawInternal(): void {
-        this.g.beginFill(this.color);
-        this.g.alpha = 0.5;
-        this.g.hitArea = new Circle(0, 0, 30);
-        this.g.drawCircle(0, 0, 30);
-        this.g.endFill();
-        this.g.interactive = true;
-        this.g.on('mouseover', function (mouseData) {
+        this.alpha = 0.5;
+        this.hitArea = new Circle(0, 0, 30);
+        this.interactive = true;
+        this.on('mouseover', function (mouseData) {
             this.alpha = 1;
         });
 
-        this.g.on('mouseout', function (mouseData) {
+        this.on('mouseout', function (mouseData) {
             this.alpha = 0.5;
         });
 
-        this.g.on('click', e => {
+        this.on('click', e => {
             console.log("nest click! antsPerClick: " + this.antsPerClick);
             for (let i = 0; i < this.antsPerClick; i++) {
-                this.particleAntContainer.addAnt();
+                this.addAnt();
                 // let ant = new Ant(0, 0, window.ANT_COLOR, this);
                 // this.ants.push(ant);
                 //this.app.stage.addChild(ant.container);
@@ -45,10 +38,12 @@ export class Nest extends GraphicsEntity<any> {
             }
         });
 
-        // TODO Add static pheromones leading to nest!
+        this.createStaticPheromones();
+    }
+
+    createStaticPheromones(): void {
         let globalPosition: Point = this.getGlobalPosition();
-        let nestPheromone = new Pheromone(globalPosition.x, globalPosition.y, 100, PheromoneType.NEST, undefined, window.SURFACE);
-        window.SURFACE.antGrid.setPheromone(globalPosition.x, globalPosition.y, nestPheromone, true);
+        let nestPheromone = window.SURFACE.antGrid.setPheromone(globalPosition.x, globalPosition.y, PheromoneType.NEST, undefined, 100, true);
 
         let radius = 60;
         for (let px = -radius; px <= radius; px += window.P_CELL_SIZE) {
@@ -56,40 +51,25 @@ export class Nest extends GraphicsEntity<any> {
                 if (px === -radius || px === radius || py === -radius || py === radius) {
                     let addedX = globalPosition.x + px;
                     let addedY = globalPosition.y + py;
-                    let newPheromone = new Pheromone(addedX, addedY, 100, PheromoneType.NEST, nestPheromone, window.SURFACE)
-
-                    window.SURFACE.antGrid.setPheromone(addedX, addedY, newPheromone, true);
+                    window.SURFACE.antGrid.setPheromone(addedX, addedY, PheromoneType.NEST, nestPheromone, 100,  true);
                 }
             }
         }
     }
 
     addAnt(): Ant {
-        let ant = new Ant(0, 0, window.ANT_COLOR, this);
-        ant.name = `ant-${++this.antCount}`;
-        this.ants.push(ant);
-
-        return ant;
+        return this.particleAntContainer.addAnt(this);
     }
 
-    deleteAnt(ant: Ant) {
-        this.removeChild(ant);
-        this.ants = this.ants.filter(a => a !== ant);
+    removeAnt(ant: Ant) {
+        this.particleAntContainer.removeAnt(ant);
     }
 
     update(delta: number): void {
-        this.particleAntContainer.ants.forEach(ant => ant.update(delta));
-    }
-
-    determineState(): BehaviorState {
-        throw new Error("Method not implemented.");
-    }
-
-    evaluate(state: BehaviorState): void {
-        throw new Error("Method not implemented.");
+        this.particleAntContainer.update(delta);
     }
 
     logString(): string {
-        return "ants: " + this.ants.length;
+        return "ants: " + this.particleAntContainer.ants.length;
     }
 }

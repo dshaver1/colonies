@@ -1,17 +1,11 @@
-import {Entity, GraphicsEntity} from "../common/entity";
+import {Entity} from "../common/entity";
 
-export class Food extends GraphicsEntity<any> {
+export class Food extends Entity<any> {
     foodValue: number;
 
     constructor(x: number, y: number, foodValue: number, parent?: Entity<any>) {
-        super(x, y, window.FOOD_COLOR, parent);
+        super(x, y, window.TEXTURES.FOOD, parent);
         this.foodValue = foodValue;
-    }
-
-    protected drawInternal(): void {
-        this.g.beginFill(window.FOOD_COLOR.color);
-        this.g.drawCircle(3, 3, 5);
-        this.g.endFill();
     }
 
     logString(): string {

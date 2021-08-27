@@ -1,29 +1,24 @@
-import {Circle} from "pixi.js";
+import {Circle, Graphics, Texture} from "pixi.js";
 import {BehaviorState} from "./behaviors";
-import {Entity, GraphicsEntity} from "../common/entity";
+import {Entity} from "../common/entity";
 import {Food} from "./food";
+import {Colors} from "../constants/colors";
 
 const foodToSizeRatio: number = 0.01;
 
-export class FoodSource extends GraphicsEntity<any> {
+export class FoodSource extends Entity<any> {
     foodValue: number;
 
     constructor(x: number, y: number, initialFoodValue: number) {
-        super(x,y,window.FOOD_COLOR);
+        super(x, y, window.TEXTURES.FOOD_SOURCE);
         this.foodValue = initialFoodValue;
+        this.hitArea = new Circle(0, 0, this.foodValue * foodToSizeRatio);
     }
 
     decrementFoodValue(amount: number) {
         this.foodValue -= amount;
         this.width -= amount * foodToSizeRatio;
         this.height -= amount * foodToSizeRatio;
-    }
-
-    drawInternal() {
-        this.g.beginFill(window.FOOD_COLOR.color);
-        this.g.hitArea = new Circle(0, 0, this.foodValue * foodToSizeRatio);
-        this.g.drawCircle(0, 0, this.foodValue * foodToSizeRatio);
-        this.g.endFill();
     }
 
     logString(): string {
@@ -36,8 +31,8 @@ export class FoodSource extends GraphicsEntity<any> {
 
     update(delta: number): void {
         let diameter = this.convertFoodValueToWidth();
-        this.g.width = diameter;
-        this.g.height = diameter;
+        this.width = diameter;
+        this.height = diameter;
     }
 
     determineState(): BehaviorState {

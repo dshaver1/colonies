@@ -1,8 +1,7 @@
-import {Pheromone, PheromoneType} from "./pheromone";
+import {Pheromone} from "./pheromone";
 import {Location2D} from "../common/location";
-import {Container} from "pixi.js";
 import {Ant} from "../entities/ant";
-import {distance} from "../common/movement-utils";
+import {PheromoneType} from "./pheromone-type";
 
 const DELTA = 0.001;
 
@@ -11,73 +10,69 @@ export class Bucket implements Location2D {
     y: number;
     locked: boolean = false;
     ants: Array<Ant>;
-    foodPheromones: Array<Pheromone>;
-    nestPheromones: Array<Pheromone>;
+    foodPheromone: Pheromone;
+    nestPheromone: Pheromone;
 
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
         this.ants = [];
-        this.foodPheromones = [];
-        this.nestPheromones = [];
     }
 
     decayAll(px: number) {
-        this.nestPheromones.forEach(pheromone => {
-            // Decay...
-            pheromone.decay(px);
+        if (this.nestPheromone) {
+            this.nestPheromone.decay(px);
 
-            if (pheromone.p < DELTA) {
+            if (this.nestPheromone.p < DELTA) {
                 // Delete very small ps...
-                (pheromone.parent as Container).removeChild(pheromone);
+                this.nestPheromone.renderable = false;
             }
-        });
+        }
 
-        this.foodPheromones.forEach(pheromone => {
-            // Decay...
-            pheromone.decay(px);
+        if (this.foodPheromone) {
+            this.foodPheromone.decay(px);
 
-            if (pheromone.p < DELTA) {
+            if (this.foodPheromone.p < DELTA) {
                 // Delete very small ps...
-                (pheromone.parent as Container).removeChild(pheromone);
+                this.foodPheromone.renderable = false;
             }
-        });
-
-        // Remove very small ps from grid
-        this.foodPheromones = this.foodPheromones.filter(pheromone => pheromone.p > DELTA);
-        this.nestPheromones = this.nestPheromones.filter(pheromone => pheromone.p > DELTA);
-    }
-
-    getPheromones(type: PheromoneType): Array<Pheromone> {
-        switch (type) {
-            case PheromoneType.NEST:
-                return this.nestPheromones;
-            case PheromoneType.FOOD:
-                return this.foodPheromones;
         }
     }
 
-    addPheromone(pheromone: Pheromone) {
-        switch (pheromone.type) {
+    getPheromone(type: PheromoneType): Pheromone {
+        switch (type) {
             case PheromoneType.NEST:
-                if (this.nestPheromones.length === 0) {
-                    this.nestPheromones.push(pheromone);
-                    pheromone.drawDebug();
-                } else if (this.nestPheromones.length === 1) {
-                    this.nestPheromones[0].p += pheromone.p;
+                return this.nestPheromone;
+            case PheromoneType.FOOD:
+                return this.foodPheromone;
+        }
+    }
+
+    addPheromone(type: PheromoneType, previous: Pheromone, p: number) {
+        switch (type) {
+            case PheromoneType.NEST:
+                if (!this.nestPheromone) {
+                    this.nestPheromone = new Pheromone(this.x, this.y, p, type, previous, window.SURFACE);
                 } else {
-                    this.nestPheromones.sort((a, b) => distance(pheromone, b) - distance(pheromone, a))[0].p += pheromone.p;
+                    this.nestPheromone.addP(p);
                 }
+
+                if (!this.nestPheromone.renderable) {
+                    this.nestPheromone.renderable = true;
+                }
+
                 break;
             case PheromoneType.FOOD:
-                if (this.foodPheromones.length === 0) {
-                    this.foodPheromones.push(pheromone);
-                    pheromone.drawDebug();
-                } else if (this.foodPheromones.length === 1) {
-                    this.foodPheromones[0].p += pheromone.p;
+                if (!this.foodPheromone) {
+                    this.foodPheromone = new Pheromone(this.x, this.y, p, type, previous, window.SURFACE);
                 } else {
-                    this.foodPheromones.sort((a, b) => distance(pheromone, b) - distance(pheromone, a))[0].p += pheromone.p;
+                    this.foodPheromone.addP(p);
                 }
+
+                if (!this.foodPheromone.renderable) {
+                    this.foodPheromone.renderable = true;
+                }
+
                 break;
         }
     }

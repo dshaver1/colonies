@@ -121,6 +121,18 @@ Focus on the big picture. What happens to old colonies once you prestige?
 
 [Particle container demo](https://www.goodboydigital.com/pixijs/canvas/bunnymark/)
 
+[Vertex shader question](https://community.khronos.org/t/using-vertex-shader-to-dynamically-move-objects/52997)
+
+[Pixi vertex shader example](http://dev.goodboydigital.com/client/goodboy/geometry/examples/index.html#/mesh/triangle-textured.js)
+
+[Webgl compute shader](https://github.com/9ballsyndrome/WebGL_Compute_shader)
+
+[GPU tweening using regl](http://bl.ocks.org/monfera/85aa9627de1ae521d3ac5b26c9cd1c49)
+
+[regl tween](https://github.com/mathisonian/regl-tween)
+
+[Example of regl-tween](https://mathisonian.github.io/regl-tween/)
+
 
 ---
 ## Build Stuff

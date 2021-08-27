@@ -1,13 +1,12 @@
-import {Application, Point} from 'pixi.js'
+import {Point} from 'pixi.js'
 import {Bucket} from "./bucket";
-import {Color} from "../common/color";
-import {getColor, Pheromone, PheromoneType} from "./pheromone";
+import {Pheromone} from "./pheromone";
 import {Entity} from "../common/entity";
-import {BehaviorState} from '../entities/behaviors';
-import {Location2D} from "../common/location";
+import {rotationDiff2} from "../common/movement-utils";
 import {Ant} from "../entities/ant";
-import {angleDiff, distance, rotationDiff, rotationDiff2} from "../common/movement-utils";
-import {Nest} from "../entities/nest";
+import {PheromoneType} from "./pheromone-type";
+import {Colors} from "../constants/colors";
+import pheromoneColor = Colors.pheromoneColor;
 
 const detectRadius = 1;
 
@@ -67,11 +66,11 @@ export class AntGrid {
         return this.getIndex(incoming, this._numRows - 1);
     }
 
-    getPheromones(globalX: number, globalY: number, type: PheromoneType): Array<Pheromone> {
+    getPheromone(globalX: number, globalY: number, type: PheromoneType): Pheromone {
         let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
-            return this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].getPheromones(type);
+            return this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].getPheromone(type);
         }
     }
 
@@ -84,24 +83,23 @@ export class AntGrid {
         }
     }
 
-    setPheromone(globalX: number, globalY: number, pheromone: Pheromone, locked: boolean = false) {
+    setPheromone(globalX: number, globalY: number, type: PheromoneType, lastPheromone: Pheromone, p: number, locked: boolean = false): Pheromone {
         let bucket: Bucket = this._map[this.getXIndex(globalX)][this.getYIndex(globalY)];
 
         if (bucket) {
-            this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].addPheromone(pheromone);
+            this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].addPheromone(type, lastPheromone, p);
             if (locked) {
                 this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].locked = true;
             }
+
+            return this._map[this.getXIndex(globalX)][this.getYIndex(globalY)].getPheromone(type);
         }
     }
 
-    addPheromone(ant: Ant, pType: PheromoneType, p: number): Pheromone {
+    addPheromone(ant: Ant, p: number): Pheromone {
         console.log("Adding pheromone...");
         let globalPosition: Point = ant.getGlobalPosition();
-        let selectedPheromone: Pheromone = new Pheromone(globalPosition.x, globalPosition.y, p, pType, ant.lastPheromone, window.SURFACE);
-        this.setPheromone(globalPosition.x, globalPosition.y, selectedPheromone);
-
-        return selectedPheromone;
+        return this.setPheromone(globalPosition.x, globalPosition.y, ant.pType(), ant.lastPheromone, p);
     }
 
     nearbyP(ant: Ant, pheromoneType: PheromoneType): Pheromone[] {
@@ -115,26 +113,28 @@ export class AntGrid {
                 for (let row = yIndex - detectRadius; row <= yIndex + detectRadius; row++) {
                     let bucket: Bucket = this._map[col][row];
                     if (bucket) {
-                        if (bucket.getPheromones(pheromoneType).length) {
+                        if (bucket.getPheromone(pheromoneType)) {
                             let radDiff = rotationDiff2({x: currentBucket.x, y: currentBucket.y, rotation: ant.rotation}, bucket);
                             if (radDiff < Math.PI / 1.5) {
-                                /*                                if (window.DEBUG) {
-                                                                    window.DEBUG_GRAPHICS.getGraphics(ant.name).alpha = 0.4
-                                                                    window.DEBUG_GRAPHICS.getGraphics(ant.name)
-                                                                        .beginFill(getColor(pheromoneType))
-                                                                        .drawRect(bucket.x, bucket.y, window.P_CELL_SIZE, window.P_CELL_SIZE)
-                                                                        .endFill();
-                                                                }*/
-                                bucket.getPheromones(pheromoneType).forEach(currentP => nearbyPs.push(currentP));
-                            }
+                                if (window.DEBUG) {
+                                    window.DEBUG_GRAPHICS.clear(ant.name);
+                                    window.DEBUG_GRAPHICS.getGraphics(ant.name).alpha = 0.4
+                                    window.DEBUG_GRAPHICS.getGraphics(ant.name)
+                                        .beginFill(pheromoneColor(pheromoneType).color)
+                                        .drawRect(bucket.x, bucket.y, window.P_CELL_SIZE, window.P_CELL_SIZE)
+                                        .endFill();
+                                }
 
+                                nearbyPs.push(bucket.getPheromone(pheromoneType));
+                            }
                         }
                     }
                 }
             }
         }
 
-        return nearbyPs.sort((a,b) => b.p - a.p);}
+        return nearbyPs.sort((a, b) => b.p - a.p);
+    }
 
     decayColumn(column: number, px: number) {
         this._map[column].filter((bucket: Bucket) => !bucket.locked).map(bucket => bucket.decayAll(px));

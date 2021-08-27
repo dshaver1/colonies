@@ -2,11 +2,10 @@ import {BoundingBox, Entity, MovableEntity} from "../common/entity";
 import {gsap} from "gsap";
 import {RoughEase} from "gsap/EasePack";
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
-import Callback = gsap.Callback;
 import {buildPheromonePath, buildSearchPath} from "../common/movement-utils";
 import {Location2D} from "../common/location";
-import {AntGrid} from "../types/antGrid";
 import {Pheromone} from "../types/pheromone";
+import Callback = gsap.Callback;
 
 gsap.registerPlugin(MotionPathPlugin);
 gsap.registerPlugin(RoughEase);
@@ -74,21 +73,32 @@ export class MoveRandomly implements Behavior<MovableEntity<any>, MoveRandomlyVa
             }
         }
 
-        entity.tween = gsap.to(entity, {
-            duration: vars.time,
-            delay: vars.delay,
-            ease: "rough({template:none.out,strength:0.2,points:10,taper:'both',randomize: true,clamp: false})",
-            motionPath: {
-                path: path,
-                type: 'linear',
-                autoRotate: true,
-                useRadians: true,
-                curviness: 0.5
-            },
-            onComplete: vars.onCompleteFunction,
-            onUpdate: vars.onUpdateFunction,
-            callbackScope: this
-        });
+        if (entity.renderable) {
+            entity.tween = gsap.to(entity, {
+                duration: vars.time,
+                delay: vars.delay,
+                ease: "rough({template:none.out,strength:0.2,points:10,taper:'both',randomize: true,clamp: false})",
+                motionPath: {
+                    path: path,
+                    type: 'linear',
+                    autoRotate: true,
+                    useRadians: true,
+                    curviness: 0.5
+                },
+                onComplete: vars.onCompleteFunction,
+                onUpdate: vars.onUpdateFunction,
+                callbackScope: this
+            });
+        } else {
+            entity.checkRenderable();
+            let endPoint = path[path.length - 1];
+            setTimeout(() => {
+                entity.x = endPoint.x;
+                entity.y = endPoint.y;
+                entity.rotation = endPoint.rotation;
+                entity.behaviorState = BehaviorState.SEARCHING;
+            }, vars.time * 1000)
+        }
     }
 }
 

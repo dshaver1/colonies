@@ -1,7 +1,6 @@
 import {Location2D} from "./location";
 import {BoundingBox, Entity} from "./entity";
 import {Pheromone} from "../types/pheromone";
-import {Ant} from "../entities/ant";
 
 
 const defaultScale = 40;
@@ -154,7 +153,7 @@ export function rotationDiff(ant: Location2D, other: Location2D): number {
     return diff(unWrappedAnt, unWrappedA1);
 }
 
-export function rotationDiff2(ant:Location2D, other: Location2D): number {
+export function rotationDiff2(ant: Location2D, other: Location2D): number {
     let a1 = angle(ant, other);
     let unWrappedAnt = unwrapRads(ant.rotation);
     let unWrappedA1 = unwrapRads(a1);
@@ -177,9 +176,9 @@ export function angleDiff(ant: Location2D, other: Location2D) {
     let v1 = {x: Math.cos(ant.rotation), y: Math.sin(ant.rotation)};
     let v2 = {x: other.x - ant.x, y: other.y - ant.y};
     let v2Magnitude = Math.hypot(v2.x, v2.y);
-    v2 = {x: v2.x/v2Magnitude, y: v2.y/v2Magnitude};
+    v2 = {x: v2.x / v2Magnitude, y: v2.y / v2Magnitude};
 
-    return Math.abs(Math.acos(dot(v1,v2)));
+    return Math.abs(Math.acos(dot(v1, v2)));
 }
 
 function dot(v1: Location2D, v2: Location2D) {

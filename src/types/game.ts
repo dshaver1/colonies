@@ -3,7 +3,7 @@ import {Color} from "../common/color";
 import {Nest} from "../entities/nest";
 import {safeToString} from "../common/entity";
 import {Surface} from "./surface";
-import { Container } from "pixi.js";
+import {Container} from "pixi.js";
 
 export class Game {
     nest: Nest;
@@ -19,7 +19,7 @@ export class Game {
         this.surface = new Surface(window.BOUNDS, surfaceColor, this);
         window.SURFACE = this.surface;
         (window.APP.stage as Container).addChild(window.SURFACE);
-        this.nest = new Nest(upperX/2, upperY/2, 1000);
+        this.nest = new Nest(upperX / 2, upperY / 2, 1);
     }
 
     start() {
