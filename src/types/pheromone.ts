@@ -14,6 +14,14 @@ export class Pheromone extends Entity<Surface> implements Location2D {
         this._p = p;
         this._type = type;
 
+        if (window.DEBUG) {
+            this.renderable = true;
+            this.visible = true;
+        } else {
+            this.renderable = false;
+            this.visible = false;
+        }
+
         if (previous) {
             this._previous = previous;
             previous.next = this;

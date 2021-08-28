@@ -4,7 +4,6 @@ import {gsap} from 'gsap';
 import {PixiPlugin} from 'gsap/PixiPlugin';
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import {Game} from "./types/game";
-import {Color} from "./common/color";
 import {BoundingBox} from "./common/entity";
 import {GlobalDebugContainer} from "./common/global-debug-container";
 import {Surface} from "./types/surface";
@@ -64,11 +63,10 @@ window.BOUNDS = new BoundingBox(0, window.APP.screen.width, 0, window.APP.screen
 //window.BOUNDS = new BoundingBox(-10000, 10000, -10000, 10000);
 
 
-
 /**
  * Initialize the game!
  */
-window.DEBUG = true;
+window.DEBUG = false;
 window.TEXTURES = new Textures();
 window.GAME = new Game(window.APP.stage.x,
     window.APP.stage.y,
@@ -78,6 +76,36 @@ window.GAME = new Game(window.APP.stage.x,
 
 window.GAME.start();
 window.DEBUG_GRAPHICS = new GlobalDebugContainer();
-(window.APP.stage as Container).addChild(window.DEBUG_GRAPHICS)
+(window.APP.stage as Container).addChild(window.DEBUG_GRAPHICS);
+
+/**
+ * Debug settings
+ */
+let debugCheckbox = <HTMLInputElement>document.getElementById("debug-checkbox");
+let numSpawnInput = <HTMLInputElement>document.getElementById("debug-num-ants");
+let spawnButton = <HTMLInputElement>document.getElementById("debug-spawn-ants");
+
+window.DEBUG = debugCheckbox.checked;
+debugCheckbox.onclick = function () {
+    window.DEBUG = debugCheckbox.checked;
+    window.DEBUG_GRAPHICS.clearAll();
+    console.log("debug: " + window.DEBUG);
+}
+
+spawnButton.onclick = function () {
+    let parsedNumber = 1;
+    try {
+        parsedNumber = parseInt(numSpawnInput.value);
+    } catch (e) {
+        // do nothing...
+    }
+
+    window.GAME.nest.addAnts(parsedNumber)
+}
+
+window.GAME.nest.onChange('antcount', () => {
+    console.log("antcount change!");
+    document.getElementById("ants").innerHTML = window.GAME.nest.getAntCount() + "";
+});
 
 console.log("Done with setup...");

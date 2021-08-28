@@ -20,11 +20,20 @@ export class GlobalDebugContainer extends Container {
     clear(name: string) {
         let now: number = Date.now();
         if (now - this.lastCleared > 10000) {
-            if (this.map.get(name)) {
-                this.map.get(name).clear();
-                this.lastCleared = now;
-            }
+            this.clearGraphics(this.map.get(name), now);
         }
+    }
+
+    clearGraphics(graphics: Graphics, now: number) {
+        if (graphics) {
+            graphics.clear();
+            this.lastCleared = now;
+        }
+    }
+
+    clearAll() {
+        let now = Date.now();
+        this.map.forEach((graphics, name) => this.clearGraphics(graphics, now));
     }
 
     remove(name: string) {

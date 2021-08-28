@@ -6,14 +6,12 @@ import {Colors} from "../constants/colors";
 import {PheromoneType} from "../types/pheromone-type";
 
 export class Nest extends Entity<any> {
-    antsPerClick: number;
-    antCount: number = 0;
     bounds: BoundingBox;
     particleAntContainer: ParticleAntContainer;
+    changeListeners: any = {};
 
-    constructor(x: number, y: number, antsPerClick: number) {
+    constructor(x: number, y: number) {
         super(x, y, window.TEXTURES.NEST);
-        this.antsPerClick = antsPerClick;
         this.bounds = window.BOUNDS;
         this.particleAntContainer = new ParticleAntContainer();
         this.alpha = 0.5;
@@ -28,14 +26,7 @@ export class Nest extends Entity<any> {
         });
 
         this.on('click', e => {
-            console.log("nest click! antsPerClick: " + this.antsPerClick);
-            for (let i = 0; i < this.antsPerClick; i++) {
-                this.addAnt();
-                // let ant = new Ant(0, 0, window.ANT_COLOR, this);
-                // this.ants.push(ant);
-                //this.app.stage.addChild(ant.container);
-                //this.app.stage.addChild(ant.debugGraphics);
-            }
+            console.log("nest click!");
         });
 
         this.createStaticPheromones();
@@ -57,12 +48,30 @@ export class Nest extends Entity<any> {
         }
     }
 
+    addAnts(numAnts: number) {
+        for (let i = 0; i < numAnts; i++) {
+            this.addAnt();
+        }
+    }
+
+    onChange(event: string, fn: Function) {
+        this.changeListeners[event] = fn;
+    }
+
     addAnt(): Ant {
-        return this.particleAntContainer.addAnt(this);
+        let ant = this.particleAntContainer.addAnt(this);
+        this.changeListeners['antcount']();
+
+        return ant;
     }
 
     removeAnt(ant: Ant) {
         this.particleAntContainer.removeAnt(ant);
+        this.changeListeners['antcount']();
+    }
+
+    getAntCount() {
+        return this.particleAntContainer.ants.length;
     }
 
     update(delta: number): void {

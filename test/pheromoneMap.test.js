@@ -19,7 +19,7 @@ beforeAll(() => {
     window.FOOD_P_COLOR = new Color("#FF0000");
     window.NEST_P_COLOR = new Color("#FF00FF");
     window.ANT_COLOR = new Color("#FF00DF");
-    nest = new Nest(500, 500, 1);
+    nest = new Nest(500, 500);
     pheromoneMap = new AntGrid("nest", 20, new Color("#ffffff"), nest);
     pheromoneMap.init(1000, 1000);
 })
