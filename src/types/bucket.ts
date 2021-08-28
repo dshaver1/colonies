@@ -57,7 +57,7 @@ export class Bucket implements Location2D {
                     this.nestPheromone.addP(p);
                 }
 
-                if (!this.nestPheromone.renderable) {
+                if (!this.nestPheromone.renderable && window.DEBUG) {
                     this.nestPheromone.renderable = true;
                 }
 
@@ -69,7 +69,7 @@ export class Bucket implements Location2D {
                     this.foodPheromone.addP(p);
                 }
 
-                if (!this.foodPheromone.renderable) {
+                if (!this.foodPheromone.renderable && window.DEBUG) {
                     this.foodPheromone.renderable = true;
                 }
 

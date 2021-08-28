@@ -19,9 +19,9 @@ export class GlobalDebugContainer extends Container {
 
     clear(name: string) {
         let now: number = Date.now();
-        if (now - this.lastCleared > 10000) {
+        //if (now - this.lastCleared > 10000) {
             this.clearGraphics(this.map.get(name), now);
-        }
+        //}
     }
 
     clearGraphics(graphics: Graphics, now: number) {
