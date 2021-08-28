@@ -19,8 +19,10 @@ export class Textures {
         this.NEST_PHEROMONE = pheromoneTexture(PheromoneType.NEST);
         this.NEST_PHEROMONE = pheromoneTexture(PheromoneType.NEST);
         this.FOOD_SOURCE = foodSourceTexture();
-        this.ANT = antTexture();
-        this.FOOD = foodTexture();
+
+        let baseTexture: PIXI.BaseRenderTexture = antBaseTexture().baseTexture;
+        this.ANT = new PIXI.Texture(baseTexture, new PIXI.Rectangle(0,0,15,5));
+        this.FOOD = new PIXI.Texture(baseTexture, new PIXI.Rectangle(15,0,10,10));
     }
 }
 
@@ -61,8 +63,9 @@ export function foodSourceTexture(): Texture {
     return window.APP.renderer.generateTexture(graphics);
 }
 
-export function antTexture() {
+export function antBaseTexture() {
     let graphic = new PIXI.Graphics()
+    // Ant part
     graphic.beginFill(Colors.ANT_COLOR.color);
     graphic.drawRect(-3, 1, 3, 4);
     graphic.drawRect(-4, 2, 1, 2);
@@ -71,14 +74,10 @@ export function antTexture() {
     graphic.drawRect(-15, 1, 6, 4);
     graphic.endFill();
 
+    // Food part
+    graphic.beginFill(Colors.FOOD_COLOR.color);
+    graphic.drawCircle(5, 5, 5);
+    graphic.endFill();
+
     return window.APP.renderer.generateTexture(graphic);
-}
-
-export function foodTexture(): Texture {
-    let graphics = new Graphics();
-    graphics.beginFill(Colors.FOOD_COLOR.color);
-    graphics.drawCircle(3, 3, 5);
-    graphics.endFill();
-
-    return window.APP.renderer.generateTexture(graphics);
 }

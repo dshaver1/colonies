@@ -7,22 +7,25 @@ import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import {Nest} from "./nest";
 import {Pheromone} from "../types/pheromone";
 import {PheromoneType} from "../types/pheromone-type";
+import {FoodSource} from "./foodsource";
+import {hit} from "../common/movement-utils";
 
 gsapcore.registerPlugin(MotionPathPlugin);
 gsapcore.registerPlugin(RoughEase);
 
-export class ParticleAntContainer extends PIXI.ParticleContainer {
+export class ParticleAntContainer extends PIXI.Container {
     ants: Array<Ant> = [];
-    texture: PIXI.Texture;
+    antTexture: PIXI.Texture;
 
     constructor() {
-        super(10000, {rotation: true});
-        this.texture = window.TEXTURES.ANT;
+        super();
+        //super(10000, {rotation: true});
+        this.antTexture = window.TEXTURES.ANT;
         (window.APP.stage as PIXI.Container).addChild(this);
     }
 
     addAnt(nest: Nest): Ant {
-        let ant: Ant = new Ant(this.texture, nest);
+        let ant: Ant = new Ant(this.antTexture, nest);
         ant.name = `ant-${this.ants.length}`;
         this.ants.push(ant);
         this.addChild(ant);
@@ -61,6 +64,14 @@ export class Ant extends MovableEntity<Nest> {
     }
 
     determineState(): BehaviorState {
+        window.GAME.foodSources.forEach(foodSource => {
+            if (hit(this, foodSource) && !this.carrying && this.behaviorState !== BehaviorState.PICKUP_FOOD) {
+                console.log("New food hit!");
+                this.behaviorState = BehaviorState.PICKUP_FOOD;
+                this.target = foodSource;
+            }
+        });
+
         return this.behaviorState;
     }
 
@@ -87,6 +98,28 @@ export class Ant extends MovableEntity<Nest> {
                 });
                 this.behaviorState = BehaviorState.IDLE;
                 break;
+            case BehaviorState.PICKUP_FOOD: {
+                console.log("PICKUP_FOOD!");
+                this.lastPheromone = undefined;
+                this.nestPCounter = 0;
+                this.stop();
+                this.carrying = (this.target as FoodSource).createFood(0, 0, this);
+                this.target = undefined;
+                this.rotation = this.rotation + Math.PI;
+
+                moveRandomly.execute(this, {
+                    bounds: window.BOUNDS,
+                    numPoints: 2,
+                    time: 1,
+                    delay: 0.5,
+                    onCompleteFunction: () => {
+                        this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
+                        this.determineState();
+                    },
+                    onUpdateFunction: () => this.dropFoodPheromone(200)
+                });
+                break;
+            }
             case BehaviorState.IDLE:
                 break;
         }
@@ -95,7 +128,7 @@ export class Ant extends MovableEntity<Nest> {
     dropFoodPheromone(interval: number) {
         let now = Date.now();
         if (now - this.lastPheromoneTimestamp > interval) {
-            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this,1);
+            this.lastPheromone = window.SURFACE.antGrid.addPheromone(this, 1);
             this.lastPheromoneTimestamp = now;
         }
     }

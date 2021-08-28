@@ -61,7 +61,7 @@ export abstract class MovableEntity<T extends Entity<any>> extends Entity<T> imp
     behaviorState: BehaviorState;
 
     protected constructor(x: number, y: number, texture: Texture, parent?: T) {
-        super(x, y, texture);
+        super(x, y, texture, parent);
         this.behaviorState = BehaviorState.IDLE;
     }
 

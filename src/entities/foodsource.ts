@@ -1,4 +1,4 @@
-import {Circle, Graphics, Texture} from "pixi.js";
+import {Circle, Container, Graphics, Texture} from "pixi.js";
 import {BehaviorState} from "./behaviors";
 import {Entity} from "../common/entity";
 import {Food} from "./food";
@@ -43,10 +43,11 @@ export class FoodSource extends Entity<any> {
         throw new Error("Method not implemented.");
     }
 
-    createFood(x: number, y: number, parent?: Entity<any>) {
+    createFood(x: number, y: number, parent?: Container) {
         console.log("Adding food to x: " + x + ", y: " + y);
 
-        let food: Food = new Food(x, y, 1, parent);
+        let food: Food = new Food(x, y, 1);
+        food.x = 10;
 
         parent.addChild(food);
 
