@@ -17,7 +17,7 @@ export class Textures {
         this.SURFACE = surfaceTexture();
         this.NEST = nestTexture();
         this.NEST_PHEROMONE = pheromoneTexture(PheromoneType.NEST);
-        this.NEST_PHEROMONE = pheromoneTexture(PheromoneType.NEST);
+        this.FOOD_PHEROMONE = pheromoneTexture(PheromoneType.FOOD);
         this.FOOD_SOURCE = foodSourceTexture();
 
         let baseTexture: PIXI.BaseRenderTexture = antBaseTexture().baseTexture;

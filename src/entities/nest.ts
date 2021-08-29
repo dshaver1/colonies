@@ -60,14 +60,19 @@ export class Nest extends Entity<any> {
 
     addAnt(): Ant {
         let ant = this.particleAntContainer.addAnt(this);
-        this.changeListeners['antcount']();
+
+        if (this.changeListeners['antcount']) {
+            this.changeListeners['antcount']();
+        }
 
         return ant;
     }
 
     removeAnt(ant: Ant) {
         this.particleAntContainer.removeAnt(ant);
-        this.changeListeners['antcount']();
+        if (this.changeListeners['antcount']) {
+            this.changeListeners['antcount']();
+        }
     }
 
     getAntCount() {

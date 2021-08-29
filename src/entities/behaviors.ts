@@ -2,7 +2,7 @@ import {BoundingBox, Entity, MovableEntity} from "../common/entity";
 import {gsap} from "gsap";
 import {RoughEase} from "gsap/EasePack";
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
-import {buildPheromonePath, buildSearchPath} from "../common/movement-utils";
+import {goToPheromonePath, buildSearchPath, followPheromonePath} from "../common/movement-utils";
 import {Location2D} from "../common/location";
 import {Pheromone} from "../types/pheromone";
 import Callback = gsap.Callback;
@@ -30,7 +30,7 @@ export interface Behavior<E extends Entity<any>, V extends BehaviorVars> {
 }
 
 export enum BehaviorState {
-    IDLE, TARGET_MOVE, SEARCHING, MOVING, PICKUP_FOOD, LOOKING_FOR_TRAIL
+    IDLE, TARGET_MOVE, SEARCHING, MOVING, PICKUP_FOOD, LOOKING_FOR_TRAIL, FOLLOWING_TRAIL
 }
 
 export interface BehaviorVars {
@@ -114,7 +114,7 @@ export class MoveToTarget implements Behavior<MovableEntity<any>, MoveToTargetVa
         stop();
         entity.behaviorState = BehaviorState.MOVING;
 
-        let path = buildPheromonePath(entity, entity.target as Pheromone)
+        let path = goToPheromonePath(entity, entity.target as Pheromone)
 
         if (window.DEBUG) {
             window.DEBUG_GRAPHICS.clear(entity.name);
@@ -146,5 +146,49 @@ export class MoveToTarget implements Behavior<MovableEntity<any>, MoveToTargetVa
     }
 }
 
+export interface FollowTrailVars extends BehaviorVars {
+    numPoints: number
+    pheromone: Pheromone
+    delay?: number
+}
+
+export class FollowTrail implements Behavior<MovableEntity<any>, FollowTrailVars> {
+    execute(entity: MovableEntity<any>, vars: FollowTrailVars) {
+        stop();
+        entity.behaviorState = BehaviorState.MOVING;
+
+        let path = followPheromonePath(entity, vars.pheromone)
+
+        if (window.DEBUG) {
+            window.DEBUG_GRAPHICS.clear(entity.name);
+            for (let i = 1; i < path.length; i++) {
+                let p1 = entity.parent.toGlobal(path[i - 1]);
+                let p2 = entity.parent.toGlobal(path[i]);
+
+                window.DEBUG_GRAPHICS.getGraphics(entity.name).lineStyle(1, 0x203d87)
+                    .moveTo(p1.x, p1.y)
+                    .lineTo(p2.x, p2.y);
+            }
+        }
+
+        entity.tween = gsap.to(entity, {
+            duration: vars.numPoints / 3,
+            delay: vars.delay,
+            ease: "rough({template:none.out,strength:0.2,points:10,taper:'both',randomize: true,clamp: false})",
+            motionPath: {
+                path: path,
+                type: 'linear',
+                autoRotate: true,
+                useRadians: true,
+                curviness: 0.5
+            },
+            onComplete: vars.onCompleteFunction,
+            onUpdate: vars.onUpdateFunction,
+            callbackScope: this
+        });
+    }
+}
+
 export const moveRandomly: MoveRandomly = new MoveRandomly();
 export const moveToTarget: MoveToTarget = new MoveToTarget();
+export const followTrail: FollowTrail = new FollowTrail();

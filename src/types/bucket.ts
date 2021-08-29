@@ -80,4 +80,8 @@ export class Bucket implements Location2D {
     addAnt(ant: Ant) {
 
     }
+
+    toString(): string {
+        return `Bucket(${this.x},${this.y}){locked: ${this.locked}, foodPheromone: ${this.foodPheromone}, nestPheromone: ${this.nestPheromone}}`
+    }
 }

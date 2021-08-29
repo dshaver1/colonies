@@ -7,24 +7,77 @@ const defaultScale = 40;
 const defaultMagnitude = 50;
 
 
-export function buildPheromonePath(start: Location2D, target: Pheromone): Array<Location2D> {
+/**
+ * Attempts to stay on a pheromone path that the ant is already on.
+ *
+ * @param start The ant's location
+ * @param target The pheromone that the ant is current standing on.
+ */
+export function followPheromonePath(start: Location2D, target: Pheromone): Array<Location2D> {
     let path: Array<Location2D> = new Array<Location2D>();
     let distanceToTarget = distance(start, target);
 
     // p1 is 10 steps in front of the ant, with ant rotation maintained.
     let p1: Location2D = targetPoint(start, 10);
     path.push(p1);
-    let pEnd, pathRotation;
+
+    // p3 is X steps in from of p1, but in the direction the path is pointing.
+    let p3, pEnd, pathRotation;
 
     if (target.previous) {
         pathRotation = angle(target, target.previous);
-        pEnd = targetPoint({x: p1.x, y: p1.y, rotation: pathRotation}, 30);
     } else {
-        pathRotation = angle(target.next, target);
-        pEnd = targetPoint({x: p1.x, y: p1.y, rotation: pathRotation}, 30);
+        pathRotation = invertAngle(angle(target.next, target));
     }
 
+    p3 = targetPoint({x: target.x, y: target.y, rotation: pathRotation}, 30);
+    pEnd = midwayVector(p1, p3, 30);
     path.push(pEnd);
+
+    //path.push(pEnd);
+
+    //console.log("Built pheromone path: " + JSON.stringify(path, null, 2));
+
+    path.filter(point => {
+        if (point.x && point.y && point.x !== 0 && point.y !== 0) {
+            return true;
+        } else {
+            console.log("Found an undefined or 0,0 point!");
+            return false;
+        }
+    });
+
+    return path;
+}
+
+/**
+ * Attempts to get the ant onto a pheromone path without being too jarring.
+ *
+ * @param start The ant's location
+ * @param target The pheromone path's location
+ */
+export function goToPheromonePath(start: Location2D, target: Pheromone): Array<Location2D> {
+    let path: Array<Location2D> = new Array<Location2D>();
+    let distanceToTarget = distance(start, target);
+
+    // p1 is 10 steps in front of the ant, with ant rotation maintained.
+    let p1: Location2D = targetPoint(start, 10);
+    path.push(p1);
+
+    // p3 is X steps in from of p1, but in the direction the path is pointing.
+    let p3, pEnd, pathRotation;
+
+    if (target.previous) {
+        pathRotation = angle(target, target.previous);
+    } else {
+        pathRotation = invertAngle(angle(target.next, target));
+    }
+
+    p3 = targetPoint({x: target.x, y: target.y, rotation: pathRotation}, 30);
+    pEnd = midwayVector(p1, p3, 30);
+    path.push(pEnd);
+
+    //path.push(pEnd);
 
     //console.log("Built pheromone path: " + JSON.stringify(path, null, 2));
 
@@ -94,7 +147,7 @@ function angle(c1: Location2D, c2: Location2D) {
         return Math.atan2(c2.y - c1.y, c2.x - c1.x);
     } catch (e) {
         console.log("Caught error in angle()!\n" + e);
-        return undefined;
+        return c1.rotation;
     }
 }
 
@@ -142,25 +195,49 @@ export function diff(num1: number, num2: number) {
     }
 }
 
+const _2PI = Math.PI * 2;
+
 export function distance(p1: Location2D, p2: Location2D): number {
     return Math.hypot(p1.x - p2.x, p1.y - p2.y);
 }
 
-export function rotationDiff(ant: Location2D, other: Location2D): number {
-    let a1 = angle(ant, other);
-    let unWrappedAnt = unwrapRads(ant.rotation);
-    let unWrappedA1 = unwrapRads(a1);
-    return diff(unWrappedAnt, unWrappedA1);
+/**
+ * Get a point midway (rotationally) between 2 points
+ *
+ * @param v1 The origin point
+ * @param v2 The destination point
+ * @param magnitude Magnitude to move in the new direction.
+ */
+function midwayVector(v1: Location2D, v2: Location2D, magnitude: number): Location2D {
+    let rotation = v1.rotation + rotationDiff(v1, v2) / 2;
+
+    return targetPoint({x: v1.x, y: v1.y, rotation: rotation}, magnitude);
 }
 
-export function rotationDiff2(ant: Location2D, other: Location2D): number {
+/**
+ * Calculates the shortest rotational difference between 2 angles.
+ *
+ * @param ant The origin point
+ * @param other The destination point
+ */
+export function rotationDiff(ant: Location2D, other: Location2D): number {
+    let a1 = angle(ant, other);
+    let diff = ( a1 - ant.rotation + Math.PI ) % _2PI - Math.PI;
+    return diff < -Math.PI ? diff + _2PI : diff;
+}
+
+/**
+ * Calculates the absolute shortest rotational difference between 2 angles, ignoring direction.
+ *
+ * @param ant The origin point
+ * @param other The destination point
+ */
+export function rotationDiffAbs(ant: Location2D, other: Location2D): number {
     let a1 = angle(ant, other);
     let unWrappedAnt = unwrapRads(ant.rotation);
     let unWrappedA1 = unwrapRads(a1);
     return Math.PI - Math.abs(Math.abs(unWrappedAnt - unWrappedA1) - Math.PI);
 }
-
-const _2PI = Math.PI * 2;
 
 export function unwrapRads(rotation: number): number {
     let angle = rotation % _2PI;

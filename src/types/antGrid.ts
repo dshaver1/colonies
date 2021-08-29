@@ -2,7 +2,7 @@ import {Point} from 'pixi.js'
 import {Bucket} from "./bucket";
 import {Pheromone} from "./pheromone";
 import {Entity} from "../common/entity";
-import {rotationDiff2} from "../common/movement-utils";
+import {rotationDiffAbs} from "../common/movement-utils";
 import {Ant} from "../entities/ant";
 import {PheromoneType} from "./pheromone-type";
 import {Colors} from "../constants/colors";
@@ -32,13 +32,14 @@ export class AntGrid {
     init(width: number, height: number) {
         this._numColumns = Math.ceil(width / this._cellSize);
         this._numRows = Math.ceil(height / this._cellSize);
+        let halfCellSize = this._cellSize / 2;
 
         try {
             for (let col = 0; col < this._numColumns; col++) {
                 //console.log("Creating column " + col);
                 this._map[col] = [];
                 for (let row = 0; row < this._numRows; row++) {
-                    this._map[col][row] = new Bucket(col * this._cellSize, row * this._cellSize);
+                    this._map[col][row] = new Bucket((col * this._cellSize) + halfCellSize, (row * this._cellSize) + halfCellSize);
                 }
             }
         } catch (e) {
@@ -74,6 +75,14 @@ export class AntGrid {
         }
     }
 
+    getBucketAtPosition(x: number, y: number): Bucket {
+        let bucket: Bucket = this._map[this.getXIndex(x)][this.getYIndex(y)];
+
+        if (bucket) {
+            return bucket;
+        }
+    }
+
     getBucket(ant: Entity<any>): Bucket {
         let globalPosition: Point = ant.getGlobalPosition();
         let bucket: Bucket = this._map[this.getXIndex(globalPosition.x)][this.getYIndex(globalPosition.y)];
@@ -99,7 +108,13 @@ export class AntGrid {
     addPheromone(ant: Ant, p: number): Pheromone {
         console.log("Adding pheromone...");
         let globalPosition: Point = ant.getGlobalPosition();
-        return this.setPheromone(globalPosition.x, globalPosition.y, ant.pType(), ant.lastPheromone, p);
+        return this.setPheromone(globalPosition.x, globalPosition.y, ant.outputPType(), ant.lastPheromone, p);
+    }
+
+    currentP(ant: Ant, pheromoneType: PheromoneType): Pheromone {
+        let globalPosition: Point = ant.getGlobalPosition();
+
+        return this.getPheromone(globalPosition.x, globalPosition.y, pheromoneType);
     }
 
     nearbyP(ant: Ant, pheromoneType: PheromoneType): Pheromone[] {
@@ -114,7 +129,7 @@ export class AntGrid {
                     let bucket: Bucket = this._map[col][row];
                     if (bucket) {
                         if (bucket.getPheromone(pheromoneType)) {
-                            let radDiff = rotationDiff2({x: currentBucket.x, y: currentBucket.y, rotation: ant.rotation}, bucket);
+                            let radDiff = rotationDiffAbs({x: currentBucket.x, y: currentBucket.y, rotation: ant.rotation}, bucket);
                             if (radDiff < Math.PI / 1.5) {
                                 if (window.DEBUG) {
                                     window.DEBUG_GRAPHICS.clear(ant.name);

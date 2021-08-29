@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import {Entity, MovableEntity} from "../common/entity";
-import {BehaviorState, moveRandomly} from "./behaviors";
+import {BehaviorState, followTrail, moveRandomly, moveToTarget} from "./behaviors";
 import {gsap as gsapcore} from "gsap";
 import {RoughEase} from "gsap/EasePack";
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
@@ -48,7 +48,8 @@ export class Ant extends MovableEntity<Nest> {
     lastPheromoneTimestamp: number = Date.now();
     lastStateCheck: number = Date.now();
     lastPheromone: Pheromone;
-    nestPCounter: number = 10;
+    currentP: Pheromone;
+    nestPCounter: number = 20;
     carrying: Entity<any>;
     target: Entity<any>;
 
@@ -64,13 +65,23 @@ export class Ant extends MovableEntity<Nest> {
     }
 
     determineState(): BehaviorState {
-        window.GAME.foodSources.forEach(foodSource => {
-            if (hit(this, foodSource) && !this.carrying && this.behaviorState !== BehaviorState.PICKUP_FOOD) {
-                console.log("New food hit!");
-                this.behaviorState = BehaviorState.PICKUP_FOOD;
-                this.target = foodSource;
+        if (!this.carrying && this.behaviorState !== BehaviorState.PICKUP_FOOD) {
+            window.GAME.foodSources.forEach(foodSource => {
+                if (hit(this, foodSource)) {
+                    console.log("New food hit!");
+                    this.behaviorState = BehaviorState.PICKUP_FOOD;
+                    this.target = foodSource;
+                }
+            });
+        }
+
+        if (this.carrying) {
+            if (hit(this, this.parentRef)) {
+                console.log("New nest hit!");
+                this.stopCarrying();
+                this.behaviorState = BehaviorState.SEARCHING;
             }
-        });
+        }
 
         return this.behaviorState;
     }
@@ -90,7 +101,7 @@ export class Ant extends MovableEntity<Nest> {
                     },
                     onUpdateFunction: () => {
                         if (this.nestPCounter >= 0) {
-                            this.dropNestPheromone(400)
+                            this.dropPheromone(100)
                         }
 
                         this.checkPheromones();
@@ -98,6 +109,30 @@ export class Ant extends MovableEntity<Nest> {
                 });
                 this.behaviorState = BehaviorState.IDLE;
                 break;
+            case BehaviorState.TARGET_MOVE: {
+                console.log("TARGET_MOVE!");
+                moveToTarget.execute(this, {
+                    target: this.target,
+                    bounds: window.BOUNDS,
+                    numPoints: 3,
+                    time: 1,
+                    delay: 0,
+                    onCompleteFunction: () => {
+                        this.checkPheromones(true);
+                        this.determineState();
+                    },
+                    onUpdateFunction: () => {
+                        if (this.carrying || this.nestPCounter >= 0) {
+                            this.dropPheromone(100);
+                        }
+
+                        if (Date.now() - this.lastStateCheck > 100) {
+                            this.determineState();
+                        }
+                    }
+                });
+                break;
+            }
             case BehaviorState.PICKUP_FOOD: {
                 console.log("PICKUP_FOOD!");
                 this.lastPheromone = undefined;
@@ -107,21 +142,50 @@ export class Ant extends MovableEntity<Nest> {
                 this.target = undefined;
                 this.rotation = this.rotation + Math.PI;
 
-                moveRandomly.execute(this, {
-                    bounds: window.BOUNDS,
-                    numPoints: 2,
-                    time: 1,
-                    delay: 0.5,
-                    onCompleteFunction: () => {
-                        this.behaviorState = BehaviorState.LOOKING_FOR_TRAIL;
-                        this.determineState();
-                    },
-                    onUpdateFunction: () => this.dropFoodPheromone(200)
-                });
+                let p = this.checkPheromones(true);
+
+                if (!p) {
+                    moveRandomly.execute(this, {
+                        bounds: window.BOUNDS,
+                        numPoints: 2,
+                        time: 1,
+                        delay: 0.5,
+                        onCompleteFunction: () => {
+                            this.behaviorState = BehaviorState.SEARCHING;
+                            this.determineState();
+                        },
+                        onUpdateFunction: () => this.dropPheromone(100)
+                    });
+                }
                 break;
             }
+            case BehaviorState.FOLLOWING_TRAIL:
+                if (this.currentP) {
+                    console.log(`Following trail! pValue: ${this.currentP.p}`);
+
+/*                    followTrail.execute(this, {
+                        bounds: window.BOUNDS,
+                        pheromone: this.currentP,
+                        numPoints: 5,
+                        delay: 0.5,
+                        onCompleteFunction: () => {
+                            this.behaviorState = BehaviorState.SEARCHING;
+                            this.determineState();
+                        },
+                        onUpdateFunction: () => this.dropPheromone(100)
+                    });*/
+                }
+                break;
             case BehaviorState.IDLE:
                 break;
+        }
+    }
+
+    dropPheromone(interval: number) {
+        if (this.outputPType() === PheromoneType.FOOD) {
+            this.dropFoodPheromone(interval);
+        } else {
+            this.dropNestPheromone(interval);
         }
     }
 
@@ -156,24 +220,42 @@ export class Ant extends MovableEntity<Nest> {
         }
     }
 
-    checkPheromones() {
+    checkPheromones(force: boolean = false): Pheromone {
         let now: number = Date.now();
-        if (now - this.lastStateCheck > 400) {
+        if (force || now - this.lastStateCheck > 200) {
             this.lastStateCheck = now;
-            let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, PheromoneType.FOOD);
+            console.log(`Checking for ${PheromoneType[this.inputPType()]} pheromones...`)
+
+            this.currentP = window.SURFACE.antGrid.currentP(this, this.inputPType());
+
+            if (this.currentP) {
+                this.behaviorState = BehaviorState.FOLLOWING_TRAIL;
+
+                return this.currentP;
+            }
+
+            let nearbyP: Pheromone[] = window.SURFACE.antGrid.nearbyP(this, this.inputPType());
 
             if (nearbyP && nearbyP.length > 0) {
                 this.target = nearbyP[0];
                 this.behaviorState = BehaviorState.TARGET_MOVE;
                 this.stop();
-                return;
+                return nearbyP[0];
             }
 
             this.determineState();
         }
     }
 
-    pType() {
+    inputPType() {
+        if (this.carrying) {
+            return PheromoneType.NEST;
+        }
+
+        return PheromoneType.FOOD;
+    }
+
+    outputPType() {
         if (this.carrying) {
             return PheromoneType.FOOD;
         }

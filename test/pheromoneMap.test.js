@@ -5,6 +5,9 @@ const {Nest} = require("../src/entities/nest");
 const {Game} = require("../src/types/game");
 const PIXI = require("pixi.js");
 const webglMock = require('jest-webgl-canvas-mock');
+const {Textures} = require("../src/constants/textures");
+const {Surface} = require("../src/types/surface");
+const {PheromoneType} = require("../src/types/pheromone-type");
 
 let nest, pheromoneMap;
 
@@ -19,10 +22,55 @@ beforeAll(() => {
     window.FOOD_P_COLOR = new Color("#FF0000");
     window.NEST_P_COLOR = new Color("#FF00FF");
     window.ANT_COLOR = new Color("#FF00DF");
-    nest = new Nest(500, 500);
-    pheromoneMap = new AntGrid("nest", 20, new Color("#ffffff"), nest);
+    window.TEXTURES = new Textures();
+    window.SURFACE = new Surface(window.BOUNDS, window.ANT_COLOR, this);
+    pheromoneMap = new AntGrid( 20);
     pheromoneMap.init(1000, 1000);
+    window.SURFACE.antGrid = pheromoneMap;
+    nest = new Nest(500, 500);
 })
+
+test('getBucket(0,0)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(0,0);
+    expect(bucket.x).toEqual(10);
+    expect(bucket.y).toEqual(10);
+});
+
+test('getBucket(10,0)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(10,0);
+    expect(bucket.x).toEqual(10);
+    expect(bucket.y).toEqual(10);
+});
+
+test('getBucket(15,0)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(15,0);
+    expect(bucket.x).toEqual(10);
+    expect(bucket.y).toEqual(10);
+});
+
+test('getBucket(5,5)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(5,5);
+    expect(bucket.x).toEqual(10);
+    expect(bucket.y).toEqual(10);
+});
+
+test('getBucket(15,15)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(15,15);
+    expect(bucket.x).toEqual(10);
+    expect(bucket.y).toEqual(10);
+});
+
+test('getBucket(20,0)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(20,0);
+    expect(bucket.x).toEqual(30);
+    expect(bucket.y).toEqual(10);
+});
+
+test('getBucket(25,25)', () => {
+    let bucket = pheromoneMap.getBucketAtPosition(25,25);
+    expect(bucket.x).toEqual(30);
+    expect(bucket.y).toEqual(30);
+});
 
 test('nearbyP values should be sorted by pheromone value.', () => {
     let ant = nest.addAnt();
@@ -36,7 +84,7 @@ test('nearbyP values should be sorted by pheromone value.', () => {
     ant.x = 120;
     ant.y = 120;
     pheromoneMap.addPheromone(ant, 1);
-    let nearby = pheromoneMap.nearbyP(ant);
+    let nearby = pheromoneMap.nearbyP(ant, PheromoneType.NEST);
 
     expect(nearby.length).toEqual(2);
     expect(nearby[0].p).toEqual(2);

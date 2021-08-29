@@ -24,7 +24,9 @@ export class Surface extends Entity<any> {
         this.hitArea = new Rectangle(0, 0, window.APP.screen.width, window.APP.screen.height);
         this.interactive = true;
         this.on('click', function (mouseData) {
-            console.log("Surface click! (" + mouseData.data.global.x + "," + mouseData.data.global.y + ")");
+            console.log(`Surface click! (${mouseData.data.global.x},${mouseData.data.global.y})
+            \nantGrid.xIndex:${this.antGrid.getXIndex(mouseData.data.global.x)}, antGrid.yIndex:${this.antGrid.getYIndex(mouseData.data.global.y)}
+            \nbucket:${this.antGrid.getBucketAtPosition(mouseData.data.global.x, mouseData.data.global.y).toString()}`);
             /*        let mouseX = mouseData.data.global.x;
                     let mouseY = mouseData.data.global.y;
 
