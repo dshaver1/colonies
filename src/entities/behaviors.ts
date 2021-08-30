@@ -2,10 +2,11 @@ import {BoundingBox, Entity, MovableEntity} from "../common/entity";
 import {gsap} from "gsap";
 import {RoughEase} from "gsap/EasePack";
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
-import {goToPheromonePath, buildSearchPath, followPheromonePath} from "../common/movement-utils";
+import {goToPheromonePath, buildSearchPath, followPheromonePath, distance} from "../common/movement-utils";
 import {Location2D} from "../common/location";
 import {Pheromone} from "../types/pheromone";
 import Callback = gsap.Callback;
+import {Path} from "../common/path";
 
 gsap.registerPlugin(MotionPathPlugin);
 gsap.registerPlugin(RoughEase);
@@ -47,7 +48,7 @@ export interface MoveRandomlyVars extends BehaviorVars {
 
 export class MoveRandomly implements Behavior<MovableEntity<any>, MoveRandomlyVars> {
     execute(entity: MovableEntity<any>, vars: MoveRandomlyVars) {
-        stop();
+        entity.stop();
         entity.behaviorState = BehaviorState.MOVING;
 
         let path = buildSearchPath(entity, vars.numPoints, [], vars.bounds);
@@ -111,7 +112,7 @@ export interface MoveToTargetVars extends BehaviorVars {
 
 export class MoveToTarget implements Behavior<MovableEntity<any>, MoveToTargetVars> {
     execute(entity: MovableEntity<any>, vars: MoveToTargetVars) {
-        stop();
+        entity.stop();
         entity.behaviorState = BehaviorState.MOVING;
 
         let path = goToPheromonePath(entity, entity.target as Pheromone)
@@ -154,16 +155,16 @@ export interface FollowTrailVars extends BehaviorVars {
 
 export class FollowTrail implements Behavior<MovableEntity<any>, FollowTrailVars> {
     execute(entity: MovableEntity<any>, vars: FollowTrailVars) {
-        stop();
+        entity.stop();
         entity.behaviorState = BehaviorState.MOVING;
 
-        let path = followPheromonePath(entity, vars.pheromone)
+        let path = followPheromonePath(entity, vars.pheromone, vars.numPoints, new Path(), vars.bounds, 40);
 
         if (window.DEBUG) {
             window.DEBUG_GRAPHICS.clear(entity.name);
-            for (let i = 1; i < path.length; i++) {
-                let p1 = entity.parent.toGlobal(path[i - 1]);
-                let p2 = entity.parent.toGlobal(path[i]);
+            for (let i = 1; i < path.length(); i++) {
+                let p1 = entity.parent.toGlobal(path.get(i - 1));
+                let p2 = entity.parent.toGlobal(path.get(i));
 
                 window.DEBUG_GRAPHICS.getGraphics(entity.name).lineStyle(1, 0x203d87)
                     .moveTo(p1.x, p1.y)
@@ -172,11 +173,11 @@ export class FollowTrail implements Behavior<MovableEntity<any>, FollowTrailVars
         }
 
         entity.tween = gsap.to(entity, {
-            duration: vars.numPoints / 3,
+            duration: path.distance / 100,
             delay: vars.delay,
             ease: "rough({template:none.out,strength:0.2,points:10,taper:'both',randomize: true,clamp: false})",
             motionPath: {
-                path: path,
+                path: path.path,
                 type: 'linear',
                 autoRotate: true,
                 useRadians: true,

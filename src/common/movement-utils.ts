@@ -1,10 +1,12 @@
 import {Location2D} from "./location";
 import {BoundingBox, Entity} from "./entity";
 import {Pheromone} from "../types/pheromone";
+import {Path} from "./path";
 
 
 const defaultScale = 40;
 const defaultMagnitude = 50;
+const _45degrees = 45 * Math.PI / 180;
 
 
 /**
@@ -13,41 +15,41 @@ const defaultMagnitude = 50;
  * @param start The ant's location
  * @param target The pheromone that the ant is current standing on.
  */
-export function followPheromonePath(start: Location2D, target: Pheromone): Array<Location2D> {
-    let path: Array<Location2D> = new Array<Location2D>();
-    let distanceToTarget = distance(start, target);
-
-    // p1 is 10 steps in front of the ant, with ant rotation maintained.
-    let p1: Location2D = targetPoint(start, 10);
-    path.push(p1);
-
-    // p3 is X steps in from of p1, but in the direction the path is pointing.
-    let p3, pEnd, pathRotation;
-
-    if (target.previous) {
-        pathRotation = angle(target, target.previous);
+export function followPheromonePath(start: Location2D,
+                                    target: Pheromone,
+                                    numPoints: number,
+                                    path: Path,
+                                    bounds: BoundingBox,
+                                    magnitude: number = defaultMagnitude): Path {
+    let point: Location2D;
+    let nextAngleDiff: number = 0;
+    if (path.length() === 0) {
+        point = targetPoint(start, 10);
     } else {
-        pathRotation = invertAngle(angle(target.next, target));
+        if (target) {
+            if (target.previous) {
+                let nextAngle = angle(target, target.previous);
+                nextAngleDiff = rotationDiff(start.rotation, nextAngle);
+                // point = targetPoint({x: target.x, y: target.y, rotation: angle(target, target.previous)}, magnitude);
+                point = {x: target.x + (Math.random() - 0.5) * 4, y: target.y + (Math.random() - 0.5) * 4, rotation: nextAngle}
+            } else {
+                point = targetPoint({x: target.x, y: target.y, rotation: start.rotation}, magnitude);
+            }
+        } else {
+            point = targetPoint({x: start.x, y: start.y, rotation: start.rotation}, magnitude);
+        }
     }
 
-    p3 = targetPoint({x: target.x, y: target.y, rotation: pathRotation}, 30);
-    pEnd = midwayVector(p1, p3, 30);
-    path.push(pEnd);
+    if (Math.abs(nextAngleDiff) < _45degrees) {
+        path.addPoint(point);
+    }
 
-    //path.push(pEnd);
+    if (path.length() === numPoints || !target) {
+        //console.log("Built path: " + JSON.stringify(accumulator, null, 2));
+        return path;
+    }
 
-    //console.log("Built pheromone path: " + JSON.stringify(path, null, 2));
-
-    path.filter(point => {
-        if (point.x && point.y && point.x !== 0 && point.y !== 0) {
-            return true;
-        } else {
-            console.log("Found an undefined or 0,0 point!");
-            return false;
-        }
-    });
-
-    return path;
+    return followPheromonePath(point, target.previous, numPoints, path, bounds, magnitude);
 }
 
 /**
@@ -143,12 +145,19 @@ function randomPoint(start: Location2D, bounds: BoundingBox, magnitude: number =
 }
 
 function angle(c1: Location2D, c2: Location2D) {
-    try {
+    if (c1 && c2) {
         return Math.atan2(c2.y - c1.y, c2.x - c1.x);
-    } catch (e) {
-        console.log("Caught error in angle()!\n" + e);
+    }
+
+    if (c1 && !c2) {
         return c1.rotation;
     }
+
+    if (c2 && !c1) {
+        return c2.rotation;
+    }
+
+    return 0;
 }
 
 /**
@@ -158,10 +167,11 @@ function angle(c1: Location2D, c2: Location2D) {
  * @param magnitude The amount to advance with each leg
  * @returns {{rotation, x: *, y: *}} The extrapolated point following the rotational line.
  */
-function targetPoint(start: Location2D, magnitude: number) {
+function targetPoint(start: Location2D, magnitude: number, delta?: number) {
+    let adjustedRotation = delta ? start.rotation + (Math.random() - 0.5) * delta : start.rotation;
     return {
-        x: start.x + (magnitude * Math.cos(start.rotation)),
-        y: start.y + (magnitude * Math.sin(start.rotation)),
+        x: start.x + (magnitude * Math.cos(adjustedRotation)),
+        y: start.y + (magnitude * Math.sin(adjustedRotation)),
         rotation: start.rotation
     }
 }
@@ -209,7 +219,7 @@ export function distance(p1: Location2D, p2: Location2D): number {
  * @param magnitude Magnitude to move in the new direction.
  */
 function midwayVector(v1: Location2D, v2: Location2D, magnitude: number): Location2D {
-    let rotation = v1.rotation + rotationDiff(v1, v2) / 2;
+    let rotation = v1.rotation + entityRotationDiff(v1, v2) / 2;
 
     return targetPoint({x: v1.x, y: v1.y, rotation: rotation}, magnitude);
 }
@@ -220,9 +230,15 @@ function midwayVector(v1: Location2D, v2: Location2D, magnitude: number): Locati
  * @param ant The origin point
  * @param other The destination point
  */
-export function rotationDiff(ant: Location2D, other: Location2D): number {
-    let a1 = angle(ant, other);
-    let diff = ( a1 - ant.rotation + Math.PI ) % _2PI - Math.PI;
+export function entityRotationDiff(ant: Location2D, other: Location2D): number {
+    let otherAngle = angle(ant, other);
+
+    return rotationDiff(ant.rotation, otherAngle);
+}
+
+export function rotationDiff(a1: number, a2: number): number {
+    let diff = (a2 - a1 + Math.PI) % _2PI - Math.PI;
+
     return diff < -Math.PI ? diff + _2PI : diff;
 }
 

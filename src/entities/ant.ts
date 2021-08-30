@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import {Entity, MovableEntity} from "../common/entity";
 import {BehaviorState, followTrail, moveRandomly, moveToTarget} from "./behaviors";
-import {gsap as gsapcore} from "gsap";
+import {gsap} from "gsap";
 import {RoughEase} from "gsap/EasePack";
 import {MotionPathPlugin} from "gsap/MotionPathPlugin";
 import {Nest} from "./nest";
@@ -10,8 +10,8 @@ import {PheromoneType} from "../types/pheromone-type";
 import {FoodSource} from "./foodsource";
 import {hit} from "../common/movement-utils";
 
-gsapcore.registerPlugin(MotionPathPlugin);
-gsapcore.registerPlugin(RoughEase);
+gsap.registerPlugin(MotionPathPlugin);
+gsap.registerPlugin(RoughEase);
 
 export class ParticleAntContainer extends PIXI.Container {
     ants: Array<Ant> = [];
@@ -163,17 +163,17 @@ export class Ant extends MovableEntity<Nest> {
                 if (this.currentP) {
                     console.log(`Following trail! pValue: ${this.currentP.p}`);
 
-/*                    followTrail.execute(this, {
+                    followTrail.execute(this, {
                         bounds: window.BOUNDS,
                         pheromone: this.currentP,
-                        numPoints: 5,
-                        delay: 0.5,
+                        numPoints: gsap.utils.random(7,10,1),
+                        delay: 0,
                         onCompleteFunction: () => {
-                            this.behaviorState = BehaviorState.SEARCHING;
+                            this.checkPheromones(true);
                             this.determineState();
                         },
                         onUpdateFunction: () => this.dropPheromone(100)
-                    });*/
+                    });
                 }
                 break;
             case BehaviorState.IDLE:
@@ -224,7 +224,7 @@ export class Ant extends MovableEntity<Nest> {
         let now: number = Date.now();
         if (force || now - this.lastStateCheck > 200) {
             this.lastStateCheck = now;
-            console.log(`Checking for ${PheromoneType[this.inputPType()]} pheromones...`)
+            //console.log(`Checking for ${PheromoneType[this.inputPType()]} pheromones...`)
 
             this.currentP = window.SURFACE.antGrid.currentP(this, this.inputPType());
 

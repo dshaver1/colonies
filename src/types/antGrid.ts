@@ -106,7 +106,7 @@ export class AntGrid {
     }
 
     addPheromone(ant: Ant, p: number): Pheromone {
-        console.log("Adding pheromone...");
+        //console.log("Adding pheromone...");
         let globalPosition: Point = ant.getGlobalPosition();
         return this.setPheromone(globalPosition.x, globalPosition.y, ant.outputPType(), ant.lastPheromone, p);
     }

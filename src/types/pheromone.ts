@@ -3,6 +3,8 @@ import {Entity} from "../common/entity";
 import {Surface} from "./surface";
 import {PheromoneType} from "./pheromone-type";
 
+const maxValue = 100;
+
 export class Pheromone extends Entity<Surface> implements Location2D {
     private _next: Array<Pheromone> = [];
     private _previous!: Pheromone;
@@ -26,6 +28,8 @@ export class Pheromone extends Entity<Surface> implements Location2D {
             this._previous = previous;
             previous.next = this;
         }
+
+        this.updateAlpha();
     }
 
     get next(): Pheromone {
@@ -75,8 +79,17 @@ export class Pheromone extends Entity<Surface> implements Location2D {
         this.updateAlpha();
     }
 
-    addP(amount: number) {
-        this._p += amount;
+    addP(amount: number, previous: Pheromone) {
+        if (this._p + amount > maxValue) {
+            this._p = maxValue;
+        } else {
+            this._p += amount;
+        }
+
+        if (previous && this.previous && this !== previous && previous.p > this.previous.p + 0.1) {
+            this.previous = previous;
+        }
+
         this.updateAlpha();
     }
 
@@ -85,7 +98,7 @@ export class Pheromone extends Entity<Surface> implements Location2D {
     }
 
     private updateAlpha() {
-        this.alpha = this._p * 0.5;
+        this.alpha = this._p * 0.01;
     }
 }
 

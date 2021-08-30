@@ -1,4 +1,4 @@
-import {rotationDiff, rotationDiffAbs, unwrapRads} from "../src/common/movement-utils";
+import {entityRotationDiff, rotationDiffAbs, unwrapRads} from "../src/common/movement-utils";
 
 test('unwrapRads 0 wrap arounds', () => {
     expect(unwrapRads(0)).toEqual(0);
@@ -79,25 +79,25 @@ test('rotationDiff ant rotated 90 degrees', () => {
     let ant = {x: 100, y: 100, rotation: 0};
     let other = {x: 100, y: 200, rotation: 0};
     let _90degrees = 90 * Math.PI/180;
-    expect(rotationDiff(ant, other)).toBeCloseTo(_90degrees, 5);
+    expect(entityRotationDiff(ant, other)).toBeCloseTo(_90degrees, 5);
 });
 
 test('rotationDiff ant rotated -90 degrees', () => {
     let ant = {x: 100, y: 100, rotation: 0};
     let other = {x: 100, y: 0, rotation: 0};
     let _90degrees = 90 * Math.PI/180;
-    expect(rotationDiff(ant, other)).toBeCloseTo(-_90degrees, 5);
+    expect(entityRotationDiff(ant, other)).toBeCloseTo(-_90degrees, 5);
 });
 
 test('rotationDiff ant rotated 180', () => {
     let ant = {x: 100, y: 100, rotation: Math.PI};
     let other = {x: 0, y: 101, rotation: 0};
-    expect(rotationDiff(ant, other)).toBeCloseTo(0.0099, 3);
+    expect(entityRotationDiff(ant, other)).toBeCloseTo(0.0099, 3);
 });
 
 test('rotationDiff ant rotated -179', () => {
     let _179degrees = 179.42 * Math.PI/180;
     let ant = {x: 100, y: 100, rotation: -_179degrees};
     let other = {x: 0, y: 101, rotation: 0};
-    expect(rotationDiff(ant, other)).toBeCloseTo(-0.0201, 3);
+    expect(entityRotationDiff(ant, other)).toBeCloseTo(-0.0201, 3);
 });

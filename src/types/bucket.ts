@@ -2,6 +2,7 @@ import {Pheromone} from "./pheromone";
 import {Location2D} from "../common/location";
 import {Ant} from "../entities/ant";
 import {PheromoneType} from "./pheromone-type";
+import { Container } from "pixi.js";
 
 const DELTA = 0.001;
 
@@ -26,6 +27,7 @@ export class Bucket implements Location2D {
             if (this.nestPheromone.p < DELTA) {
                 // Delete very small ps...
                 this.nestPheromone.renderable = false;
+                (this.nestPheromone.parent as Container).removeChild(this.nestPheromone);
             }
         }
 
@@ -35,6 +37,7 @@ export class Bucket implements Location2D {
             if (this.foodPheromone.p < DELTA) {
                 // Delete very small ps...
                 this.foodPheromone.renderable = false;
+                (this.foodPheromone.parent as Container).removeChild(this.foodPheromone);
             }
         }
     }
@@ -54,7 +57,7 @@ export class Bucket implements Location2D {
                 if (!this.nestPheromone) {
                     this.nestPheromone = new Pheromone(this.x, this.y, p, type, previous, window.SURFACE);
                 } else {
-                    this.nestPheromone.addP(p);
+                    this.nestPheromone.addP(p, previous);
                 }
 
                 if (!this.nestPheromone.renderable && window.DEBUG) {
@@ -66,7 +69,7 @@ export class Bucket implements Location2D {
                 if (!this.foodPheromone) {
                     this.foodPheromone = new Pheromone(this.x, this.y, p, type, previous, window.SURFACE);
                 } else {
-                    this.foodPheromone.addP(p);
+                    this.foodPheromone.addP(p, previous);
                 }
 
                 if (!this.foodPheromone.renderable && window.DEBUG) {
