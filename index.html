@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    
+    <title>The Colonies</title>
+    
+    <style>
+        #container {
+            position: relative;
+            width: 100%;
+        }
+        #container canvas {
+            position: absolute;
+        }
+        #debug-overlay {
+            position: absolute;
+            margin: 0px;
+            padding: 10px;
+            color: #507272;
+            font-family: "Courier New",serif;
+            font-size: smaller;
+            z-index:9999;
+        }
+        #hud {
+            position:relative;
+            margin: 0px;
+            padding: 10px;
+            color: #507272;
+            font-family: "Courier New",serif;
+            font-size: smaller;
+            display: flex;
+            justify-content: flex-end;
+            z-index:9998;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #pixiView {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+<div id="container">
+    <canvas id="pixiView"></canvas>
+    <div id="debug-overlay">
+        <input type="checkbox" id="debug-checkbox" name="debug" value="debug" checked><label for="debug-checkbox"> Debug</label>
+        <input type="text" id="debug-num-ants" name="debug-num-ants" value="1" width="4" size="4">
+        <input type="button" id="debug-spawn-ants" name="debug-spawn-ants" value="Spawn">
+    </div>
+    <div id="hud">
+        Ants:<div id="ants">0</div>&nbsp;
+        Food:<div id="food">0</div>
+    </div>
+    
+    <script type="text/javascript" src="main.js"></script>
+</div>
+</body>
+</html>
